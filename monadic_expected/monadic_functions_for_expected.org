@@ -1,0 +1,339 @@
+#+AUTHOR: Jeff Garland
+#+TITLE: D2505R0 Monadic Functions for ~std::expected~
+#+EMAIL: jeff@crystalclearsoftware.com
+#+REVISION: 0
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+options: num:nil
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [11pt]
+#+LaTeX_HEADER: \usepackage[letterpaper,margin=.75in,top=.75in,bottom=.75in]{geometry}
+#+LaTeX_HEADER: \usepackage[frame=lines, linenos=true]{minted}
+#+LaTeX_HEADER: \usepackage{pdfpages}
+
+*Authors:*
+    Jeff Garland
+
+*Audience:*
+    LEWG, LWG
+
+*Project:*
+    ISO/IEC JTC1/SC22/WG21 14882: Programming Language — C++
+
+*Contact:*
+    jeff@crystalclearsoftware.com
+
+* Introduction
+With the final plenary vote of [[https://wg21.link/P0798][P0798 Monadic Functions for std::optional]] complete, we now have an design inconsistency with ~std::expected~. [[https://wg21.link/P0323][P0323 std::expected]] is currently in final LWG wording review for C++23. This proposal corrects the inconsistency by adding 3 functions to ~std::expected~ and is targeted at C++23.
+
+The intent from P0798 clearly states that ~std::expected~ should gain the same functions:
+#+begin_quote
+There is a proposal for std::expected which would benefit from many of these same ideas. If the idea to add monadic interfaces to standard library classes on a case-by-case basis is chosen rather than a unified non-member function interface, then compatibility between this proposal and the std::expected one should be maintained
+#+end_quote
+* Motivation and Scope
+
+The following 3 functions are added to ~std::optional~, but are currently not part of ~std::expected~.  
+
+  - ~and_then~  compose a chain of functions returning an expected
+  - ~or_else~   returns if it has a value, otherwise it calls a function with the error type
+  - ~transform~ apply a function to change the value (and possibly the type) 
+
+For example, given the following:
+#+BEGIN_SRC C++
+  using time_expected = expected<boost::posix_time::ptime, std::string>;
+
+  time_expected from_iso_str( std::string time )
+  {
+    try {
+      ptime t  = boost::posix_time::from_iso_string( time );
+      return t;
+    }
+    catch( std::exception& e )
+    {
+       return unexpected( e.what() + " str was: "s + time);
+    }
+  }
+
+  // for use with transform
+  ptime next_day( boost::posix_time::ptime t )
+  {
+     return t + boost::gregorian::days(1);
+  }
+
+  // for use with or_else
+  void print_error( std::string error )
+  {
+     cout << error << endl;
+  }
+
+
+  //valid iso string
+  const std::string ts ( "20210726T000000" );
+#+END_SRC
+
+Before the change we'd write this:
+
+| Before |
+#+BEGIN_SRC C++
+  time_expected d = from_iso_str( ts );
+  if (d)
+  {
+     ptime t = next_day( *d );
+  } 
+  else
+  {
+     print_error( d.error() );
+  }
+#+END_SRC
+
+And after, this:
+
+| After |
+
+#+BEGIN_SRC C++
+   // chain a series of functions until there's an error
+   auto d = from_iso_str ( ts )
+                  .or_else( print_error )
+                  .transform( next_day ) ;
+#+END_SRC
+
+For more examples see: https://godbolt.org/z/Tjo6YqoPn.
+
+* Design Considerations
+Compared with ~optional~, ~expected~ provides the capability for ~void~ as a function return type. This complicates the design compared to ~optional~.  As currently specified the ~void~ specialization of ~expected~, ~expected<void, T>~ removes the ~value_or~ function since ~void~ cannot be initialized to anything else.  The situation is similar with ~transform~ when the expected value type is ~void~.  Thus ~transform~ should not compile with ~expected<void, err>~.  The following example illustrates the proposed behavior.
+#+BEGIN_SRC C++
+  using void_expected = expected<void, std::string>;
+
+  // for use with or_else
+  void print_error( std::string error )
+  {
+    cout << error << endl;
+  }
+
+  void_expected doit(int x) 
+  {
+      if (x < 5) return {}; //void return
+      return unexpected(std::format("X must be less than 5 passed {}", x));
+  }
+  // chained in and_then
+  void_expected doit2() 
+  {
+      return {};
+  }
+  auto res = doit(1).or_else( print_error ); //res.has_value() == true
+  res = doit(5).or_else( print_error );      //call print_error
+  res = doit(1).and_then( doit2 );           //call doit2
+  //res = doit(5).transform(doit(5));        //compile error
+  //res = doit(5).value_or({});              //compile error
+#+END_SRC
+
+* Other Languages
+
+Rust provides a result type with similar functions monadic functions.
+
+https://doc.rust-lang.org/std/result/enum.Result.html
+
+* Implementations
+
+This has been implemented by Sy Brand https://github.com/TartanLlama/expected with [[https://tl.tartanllama.xyz/en/latest/api/expected.html#tl-expected][documentation here]]. The author is unaware of another expected implementation that adds these functions. 
+
+* Wording
+** Feature Test Macro  
+
+Update the ~__cpp_lib_expected~ feature test macro from P0323.  Although this could be considered optional since expected is not yet a c++ feature in any implementations.
+
+** Class template expected [expected.expected]
+
+After ~value_or~ functions add the new functions:
+
+#+BEGIN_SRC C++
+  template<class U> constexpr T value_or(U&&) &&;
+
+  // [expected.monadic], monadic operations
+  template <class F> constexpr auto and_then(F&& f) &;
+  template <class F> constexpr auto and_then(F&& f) &&;
+  template <class F> constexpr auto and_then(F&& f) const&;
+  template <class F> constexpr auto and_then(F&& f) const&&;
+  template <class F> constexpr auto transform(F&& f) &;
+  template <class F> constexpr auto transform(F&& f) &&;
+  template <class F> constexpr auto transform(F&& f) const&;
+  template <class F> constexpr auto transform(F&& f) const&&;
+  template <class F> constexpr expected or_else(F&& f) &&;
+  template <class F> constexpr expected or_else(F&& f) const&;
+  // [expected.mod], modifiers
+#+END_SRC
+
+** Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]   
+
+  1 ~template <class F> constexpr auto and_then(F&& f) &;~
+
+  2 ~template <class F> constexpr auto and_then(F&& f) const&;~
+
+    Let U be ~invoke_result_t<F, decltype(value())>~.
+
+    /Constraints:/ F models ~invocable<decltype(value())>~.
+
+    /Mandates:/ ~remove_cvref_t<U>~ is a specialization of expected.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+      if (*this) { 
+         return invoke(std::forward<F>(f), value());
+      }
+      else { 
+         return std::forward(error());
+      }
+#+END_SRC
+
+  1 ~template <class F> constexpr auto and_then(F&& f) &&;~
+
+  2 ~template <class F> constexpr auto and_then(F&& f) const&&;~
+
+    Let U be ~invoke_result_t<F, decltype(std::move(value()))>~.
+
+    /Constraints:/ F models ~invocable<decltype(std::move(value()))>~.
+
+    /Mandates:/ ~is_same_v<U, expected>~ is true.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+          return invoke(std::forward<F>(f), std::move(value()));
+       }
+       else { 
+          return unexpected<E>(error());
+       }
+#+END_SRC
+
+   1 ~template <class F> constexpr auto transform(F&& f) &;~
+
+   2 ~template <class F> constexpr auto transform(F&& f) const&;~
+
+    Let U be ~invoke_result_t<F, decltype(value())>~.
+
+    /Constraints:/ F models ~invocable<decltype(value())>~.
+
+    /Mandates:/ ~is_same_v<U, expected>~ is true.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+          return expected<U,E>(in_place, invoke(std::forward<F>(f), value()));
+       }
+       else { 
+          return unexpected<E>(error());
+       }
+#+END_SRC
+
+    1 ~template <class F> constexpr auto transform(F&& f) &&;~
+
+    2 ~template <class F> constexpr auto transform(F&& f) const&&;~
+
+    Let U be ~invoke_result_t<F, decltype(std::move(value()))>~.
+
+    /Constraints:/ F models ~invocable<decltype(std::move(value()))>~.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+          return expected<U,E>(in_place, invoke(std::forward<F>(f), std::move(value())));
+       }
+       else { 
+          return unexpected<E>(error());
+       }
+#+END_SRC
+    ~1 template <class F> constexpr expected or_else(F&& f) const&;~
+
+    /Constraints:/ F models ~invocable<>~ and E models ~copy_constructible~.
+
+    /Mandates:/ ~is_same_v<remove_cvref_t<invoke_result_t<F>>, expected>~ is true.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+           return *this;
+       } 
+       else { 
+          return std::forward<F>(f)(invoke(error()));
+       }
+#+END_SRC
+    ~1 template <class F> constexpr expected or_else(F&& f) &&;~
+
+    /Constraints:/ F models ~invocable<>~ and E models ~move_constructable~
+
+    /Mandates:/ ~is_same_v<remove_cvref_t<invoke_result_t<F>>, expected>~ is true.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+          return std::move(*this);
+       }
+       else { 
+          return std::forward<F>(f)(invoke(error()));
+       }
+#+END_SRC
+** Partial specialization of expected for void types [expected.void]
+After �.�.8.6, observers -- add
+
+#+BEGIN_SRC C++
+  // �.�.8.7, monadic
+  template <class F> constexpr auto and_then(F&& f) &;
+  template <class F> constexpr auto and_then(F&& f) &&;
+  template <class F> constexpr auto and_then(F&& f) const&;
+  template <class F> constexpr auto and_then(F&& f) const&&;
+  template <class F> constexpr expected or_else(F&& f) &&;
+  template <class F> constexpr expected or_else(F&& f) const&;
+#+END_SRC
+** Partial specialization of expected for void [expected.void.observe]
+After section �.�.8.5 Observers [expected.void.observe]
+
+Add section �.�.8.6 Monadic [expected.void.monadic]
+
+TODO ~and_then~ void wording
+
+    ~1 template <class F> constexpr expected or_else(F&& f) const&;~
+
+    /Constraints:/ F models ~invocable<>~
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+           return *this;
+       } 
+       else { 
+          return std::forward<F>(f)();
+       }
+#+END_SRC
+    ~1 template <class F> constexpr expected or_else(F&& f) &&;~
+
+    /Constraints:/ F models ~invocable<>~.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+       if (*this) { 
+          return std::move(*this);
+       }
+       else { 
+          return std::forward<F>(f)();
+       }
+#+END_SRC
+
+* Acknowledgements
+ - Thanks to Sy Brand for the original work on optional and expected.
+ - Thanks to Broneck Kozicki for early feedback.
+
+
+* Revision History
+
+| Version |       Date | Changes         |
+|---------+------------+-----------------|
+|       0 | 2021-12-12 | Initial Draft   |
+|---------+------------+-----------------|
+
+* References
+  1. [P0798] Sy Brand "Monadic Functions for std::optional" https://wg21.link/P0798
+  2. C++ draft [optional.nomadic] http://eel.is/c++draft/optional.monadic
+  3. [P0323] Vicente Botet, JF Bastien, Jonathan Wakely  std::expected https://wg21.link/P0323
+  4. Sy Brand expected  https://github.com/TartanLlama/expected
+  5. Sy Brand expected docs https://tl.tartanllama.xyz/en/latest/api/expected.html#tl-expected 
+  6. Rust Result https://doc.rust-lang.org/std/result/enum.Result.html
+  7. More complete examples https://godbolt.org/z/Tjo6YqoPn

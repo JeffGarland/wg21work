@@ -1,5 +1,5 @@
 #+AUTHOR: Jeff Garland
-#+TITLE: D2505R0 Monadic Functions for ~std::expected~
+#+TITLE: P2505R0 Monadic Functions for ~std::expected~
 #+EMAIL: jeff@crystalclearsoftware.com
 #+REVISION: 0
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
@@ -96,7 +96,7 @@ And after, this:
                   .transform( next_day ) ;
 #+END_SRC
 
-For more examples see: https://godbolt.org/z/Tjo6YqoPn.
+For more examples see: https://godbolt.org/z/va5fzx11f
 
 * Design Considerations
 Compared with ~optional~, ~expected~ provides the capability for ~void~ as a function return type. This complicates the design compared to ~optional~.  As currently specified the ~void~ specialization of ~expected~, ~expected<void, T>~ removes the ~value_or~ function since ~void~ cannot be initialized to anything else.  The situation is similar with ~transform~ when the expected value type is ~void~.  Thus ~transform~ should not compile with ~expected<void, err>~.  The following example illustrates the proposed behavior.
@@ -170,7 +170,7 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~invoke_result_t<F, decltype(value())>~.
 
-    /Constraints:/ F models ~invocable<decltype(value())>~.
+    /Constraints:/ F models ~invocable<decltype(value())>~. E and U model ~copy_constructible~.
 
     /Mandates:/ ~remove_cvref_t<U>~ is a specialization of expected.
 
@@ -180,7 +180,7 @@ After ~value_or~ functions add the new functions:
          return invoke(std::forward<F>(f), value());
       }
       else { 
-         return std::forward(error());
+         return *this;
       }
 #+END_SRC
 
@@ -190,9 +190,9 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~invoke_result_t<F, decltype(std::move(value()))>~.
 
-    /Constraints:/ F models ~invocable<decltype(std::move(value()))>~.
+    /Constraints:/ F models ~invocable<decltype(std::move(value()))>~. E and U model ~move_constructible~.
 
-    /Mandates:/ ~is_same_v<U, expected>~ is true.
+    /Mandates:/ ~remove_cvref_t<U>~ is a specialization of expected.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -200,7 +200,7 @@ After ~value_or~ functions add the new functions:
           return invoke(std::forward<F>(f), std::move(value()));
        }
        else { 
-          return unexpected<E>(error());
+          return std::move(*this);
        }
 #+END_SRC
 
@@ -210,9 +210,7 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~invoke_result_t<F, decltype(value())>~.
 
-    /Constraints:/ F models ~invocable<decltype(value())>~.
-
-    /Mandates:/ ~is_same_v<U, expected>~ is true.
+    /Constraints:/ F models ~invocable<decltype(value())>~. E and U model ~copy_constructible~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -220,7 +218,7 @@ After ~value_or~ functions add the new functions:
           return expected<U,E>(in_place, invoke(std::forward<F>(f), value()));
        }
        else { 
-          return unexpected<E>(error());
+          return *this;
        }
 #+END_SRC
 
@@ -230,7 +228,7 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~invoke_result_t<F, decltype(std::move(value()))>~.
 
-    /Constraints:/ F models ~invocable<decltype(std::move(value()))>~.
+    /Constraints:/ F models ~invocable<decltype(std::move(value()))>~. E and U model ~move_constructible~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -238,7 +236,7 @@ After ~value_or~ functions add the new functions:
           return expected<U,E>(in_place, invoke(std::forward<F>(f), std::move(value())));
        }
        else { 
-          return unexpected<E>(error());
+          return std::move(*this)
        }
 #+END_SRC
     ~1 template <class F> constexpr expected or_else(F&& f) const&;~
@@ -253,7 +251,7 @@ After ~value_or~ functions add the new functions:
            return *this;
        } 
        else { 
-          return std::forward<F>(f)(invoke(error()));
+          return invoke(std::forward<F>(f)(error()));
        }
 #+END_SRC
     ~1 template <class F> constexpr expected or_else(F&& f) &&;~
@@ -268,7 +266,7 @@ After ~value_or~ functions add the new functions:
           return std::move(*this);
        }
        else { 
-          return std::forward<F>(f)(invoke(error()));
+          return invoke(std::forward<F>(f)(std::move(error())));
        }
 #+END_SRC
 ** Partial specialization of expected for void types [expected.void]
@@ -288,11 +286,45 @@ After section �.�.8.5 Observers [expected.void.observe]
 
 Add section �.�.8.6 Monadic [expected.void.monadic]
 
-TODO ~and_then~ void wording
+  1 ~template <class F> constexpr auto and_then(F&& f) &;~
+
+  2 ~template <class F> constexpr auto and_then(F&& f) const&;~
+
+    /Constraints:/ F models ~invocable<>~ and E models ~copy_constructible~.
+
+    /Mandates:/ ~is_same_v<remove_cvref_t<invoke_result_t<F>>, expected>~ is true.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+      if (*this) { 
+         return invoke(std::forward<F>(f)());
+      }
+      else { 
+         return *this;
+      }
+#+END_SRC
+
+  1 ~template <class F> constexpr auto and_then(F&& f) &&;~
+
+  2 ~template <class F> constexpr auto and_then(F&& f) const&&;~
+
+    /Constraints:/ F models ~invocable<>~ and E models ~move_constructible~.
+
+    /Mandates:/ ~is_same_v<remove_cvref_t<invoke_result_t<F>>, expected>~ is true.
+
+    /Effects:/ Equivalent to:
+#+BEGIN_SRC C++
+      if (*this) { 
+         return invoke(std::forward<F>(f)());
+      }
+      else { 
+         return std::move(*this);
+      }
+#+END_SRC
 
     ~1 template <class F> constexpr expected or_else(F&& f) const&;~
 
-    /Constraints:/ F models ~invocable<>~
+    /Constraints:/ F models ~invocable<>~ and E models ~copy_constructible~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -300,12 +332,12 @@ TODO ~and_then~ void wording
            return *this;
        } 
        else { 
-          return std::forward<F>(f)();
+          return invoke(std::forward<F>(f)());
        }
 #+END_SRC
     ~1 template <class F> constexpr expected or_else(F&& f) &&;~
 
-    /Constraints:/ F models ~invocable<>~.
+    /Constraints:/ F models ~invocable<>~ and E models ~move_constructible~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -313,14 +345,13 @@ TODO ~and_then~ void wording
           return std::move(*this);
        }
        else { 
-          return std::forward<F>(f)();
+          return invoke(std::forward<F>(f)());
        }
 #+END_SRC
 
 * Acknowledgements
  - Thanks to Sy Brand for the original work on optional and expected.
  - Thanks to Broneck Kozicki for early feedback.
-
 
 * Revision History
 
@@ -336,4 +367,4 @@ TODO ~and_then~ void wording
   4. Sy Brand expected  https://github.com/TartanLlama/expected
   5. Sy Brand expected docs https://tl.tartanllama.xyz/en/latest/api/expected.html#tl-expected 
   6. Rust Result https://doc.rust-lang.org/std/result/enum.Result.html
-  7. More complete examples https://godbolt.org/z/Tjo6YqoPn
+  7. More complete examples https://godbolt.org/z/va5fzx11f

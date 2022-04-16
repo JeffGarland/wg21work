@@ -1,5 +1,5 @@
 #+AUTHOR: Jeff Garland
-#+TITLE: D2505R2 Monadic Functions for ~std::expected~
+#+TITLE: P2505R2 Monadic Functions for ~std::expected~
 #+EMAIL: jeff@crystalclearsoftware.com
 #+REVISION: 1
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
@@ -40,7 +40,7 @@ The following 3 functions are added to ~std::optional~, but are currently not pa
 
 After feedback on the R0, this draft also proposes the addition of a fourth function for ~expected~ to facilitate additional cases:
 
-  - ~transform_or~ apply a function to change the value, otherwise call a function with error type
+  - ~transform_error~ apply a function to change the value, otherwise call a function with error type
 
 For example, given the following:
 #+BEGIN_SRC C++
@@ -110,9 +110,9 @@ Compared with ~optional~, ~expected~ provides the capability for ~void~ as a fun
 
 While the primary implementation for this paper excludes ~transform~ for ~expected<void, E>~ and the original version removed this overload, feedback from reviewers suggested the overload is valuable.  Thus the new version allows for this overload.
 
-** ~transform_or~ function
+** ~transform_error~ function
 
-The R0 version of this paper did not include this function to match optional, but several reviewers noted the important utility of this case. Note that in the reference implementation of this paper, the function is called ~map_error~.
+The R0 version of this paper did not include this function to match optional, but several reviewers noted the important utility of this case. Note that in the reference implementation of this paper, the function is called ~map_error~.  The R1 version of the paper names the function ~transform_error~ after discussions with various reviewers.
 
 ** changing of error return types
 
@@ -134,7 +134,7 @@ Thus we would like to support use cases like the following:
 
 #+END_SRC
 
-Note that the changing of the error type applies to the ~or_else~ and ~transform_or~ overloads only.
+Note that the changing of the error type applies to the ~or_else~ and ~transform_error~ overloads only.
 
 * Other Languages
 
@@ -147,7 +147,6 @@ https://doc.rust-lang.org/std/result/enum.Result.html
 Jonathan Wakely has implemented the full proposal here https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected.
 
 The core of the proposal was originally implemented by Sy Brand https://github.com/TartanLlama/expected with [[https://tl.tartanllama.xyz/en/latest/api/expected.html#tl-expected][documentation here]]. 
-
 
 * Wording
 ** Feature Test Macro  
@@ -174,10 +173,10 @@ After ~value_or~ functions add the new functions:
   template <class F> constexpr auto transform(F&& f) &&;
   template <class F> constexpr auto transform(F&& f) const&;
   template <class F> constexpr auto transform(F&& f) const&&;
-  template <class F> constexpr auto transform_or(F&& f) &;
-  template <class F> constexpr auto transform_or(F&& f) &&;
-  template <class F> constexpr auto transform_or(F&& f) const&;
-  template <class F> constexpr auto transform_or(F&& f) const&&;
+  template <class F> constexpr auto transform_error(F&& f) &;
+  template <class F> constexpr auto transform_error(F&& f) &&;
+  template <class F> constexpr auto transform_error(F&& f) const&;
+  template <class F> constexpr auto transform_error(F&& f) const&&;
   // [expected.object.swap], swap
 #+END_SRC
 
@@ -198,11 +197,11 @@ After ~value_or~ functions add the new functions:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-      if (*this) { 
+      if (has_value()) { 
          return invoke(std::forward<F>(f), value());
       }
       else { 
-         return *this;
+         return U(unexpect, error());
       }
 #+END_SRC
 
@@ -221,30 +220,30 @@ After ~value_or~ functions add the new functions:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
+       if (has_value()) { 
           return invoke(std::forward<F>(f), std::move(value()));
        }
-       else { 
-          return std::move(*this);
+       else {
+          return U(unexpect, std::move(error()));
        }
 #+END_SRC
    1 ~template <class F> constexpr auto or_else(F&& f) &;~
 
    2 ~template <class F> constexpr auto or_else(F&& f) const&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
+    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
 
     /Constraints:/
-       - ~is_same_v<U::value_type, T>~ is ~true~, 
+       - ~is_same_v<G::value_type, T>~ is ~true~, 
        - ~is_copy_constructible_v<T>~ is ~true~, and
-       - ~is_copy_constructible_v<U>~ is ~true~. 
+       - ~is_copy_constructible_v<G>~ is ~true~. 
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~.
 
     Effects: Equivalent to:
 #+BEGIN_SRC C++
-        if (*this) {
-            return U(value());
+        if (has_value()) {
+            return G(value());
         } else {
             return invoke(std::forward<F>(), error());
         }
@@ -254,18 +253,18 @@ After ~value_or~ functions add the new functions:
 
     2 ~template <class F> constexpr auto or_else(F&& f) const&&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~. 
+    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~. 
 
     /Constraints:/
-       - ~is_same_v<U::value_type, T>~ is ~true~, 
+       - ~is_same_v<G::value_type, T>~ is ~true~, 
        - ~is_move_constructible_v<T>~ is ~true~, and
-       - ~is_move_constructible_v<U>~ is ~true~. 
+       - ~is_move_constructible_v<G>~ is ~true~. 
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
+       if (has_value()) { 
           return std::move(*this);
        }
        else { 
@@ -285,11 +284,11 @@ After ~value_or~ functions add the new functions:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) {
-          return expected<U,E>(in_place, invoke(std::forward<F>(f), value()));
+       if (has_value()) {
+          return expected<U,E>(invoke(std::forward<F>(f), value()));
        }
-       else { 
-          return *this;
+       else {
+          return U(unexpect, error());
        }
 #+END_SRC
 
@@ -306,46 +305,46 @@ After ~value_or~ functions add the new functions:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
-          return expected<U,E>(in_place, invoke(std::forward<F>(f), std::move(value())));
+       if (has_value()) { 
+          return expected<U,E>(invoke(std::forward<F>(f), std::move(value())));
        }
        else { 
-          return std::move(*this);
+          return U(unexpect, std::move(error()));
        }
 #+END_SRC
-    1 ~template <class F> constexpr auto transform_or(F&& f) &;~
+    1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
-    2 ~template <class F> constexpr auto transform_or(F&& f) const&;~
+    2 ~template <class F> constexpr auto transform_error(F&& f) const&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~. 
+    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~. 
 
     /Constraints:/
        - ~is_copy_constructible_v<T>~ is ~true~, and
-       - ~is_copy_constructible_v<U>~ is ~true~. 
+       - ~is_copy_constructible_v<G>~ is ~true~. 
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
-           return expected<T, U>(value());
+       if (has_value()) { 
+           return expected<T, G>(value());
        } 
        else { 
           return invoke(std::forward<F>(f)(error()));
        }
 #+END_SRC
-    1 ~template <class F> constexpr auto transform_or(F&& f) &&;~
+    1 ~template <class F> constexpr auto transform_error(F&& f) &&;~
 
-    2 ~template <class F> constexpr auto transform_or(F&& f) const&&;~
+    2 ~template <class F> constexpr auto transform_error(F&& f) const&&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
+    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
 
     /Constraints:/
        - ~is_move_constructible_v<T>~ is ~true~, and
-       - ~is_move_constructible_v<U>~ is ~true~. 
+       - ~is_move_constructible_v<G>~ is ~true~. 
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
-          return expected<T, U>(std::move(value()))
+       if (has_value()) { 
+          return expected<T, G>(std::move(value()))
        }
        else { 
           return invoke(std::forward<F>(f)(std::move(error())));
@@ -369,10 +368,10 @@ After �.�.8.6, observers -- add
   template <class F> constexpr auto transform(F&& f) &&;
   template <class F> constexpr auto transform(F&& f) const&;
   template <class F> constexpr auto transform(F&& f) const&&;
-  template <class F> constexpr auto transform_or(F&& f) &;
-  template <class F> constexpr auto transform_or(F&& f) &&;
-  template <class F> constexpr auto transform_or(F&& f) const&;
-  template <class F> constexpr auto transform_or(F&& f) const&&;
+  template <class F> constexpr auto transform_error(F&& f) &;
+  template <class F> constexpr auto transform_error(F&& f) &&;
+  template <class F> constexpr auto transform_error(F&& f) const&;
+  template <class F> constexpr auto transform_error(F&& f) const&&;
 #+END_SRC
 ** Partial specialization of expected for void [expected.void.observe]
 After section �.�.8.5 Observers [expected.void.observe]
@@ -387,19 +386,19 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
   4 ~template <class F> constexpr auto and_then(F&& f) const&&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F,void>>~. 
+    Let U be ~remove_cvref_t<invoke_result_t<F>>~. 
 
-    /Constraints:/ ~is_same_v<U::error_type, E>~ is true. E models ~copy_constructible~ for the first two overloads and ~move_constructible~ for the second two overloads. [ /Note:/ U will implicitly model either copy or move constructible since U is ~expected<void, E>~ -- /end note/ ].
+    /Constraints:/ ~is_same_v<U::error_type, E>~ is true. E models ~copy_constructible~ for the first two overloads and ~move_constructible~ for the second two overloads.
 
     /Mandates:/ U is a specialization of ~expected~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-      if (*this) { 
+      if (has_value()) { 
          return std::move(std::forward<F>(f)());
       }
       else { 
-         return std::move(*this);
+         return U(unexpect, std::move(error()));
       }
 #+END_SRC
 
@@ -411,15 +410,15 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     4 ~template <class F> constexpr expected or_else(F&& f) const &&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~. 
+    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~. 
 
     /Constraints:/  E models ~copy_constructible~ for the first two overloads and ~move_constructible~ for the second two overloads.
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
+       if (has_value()) { 
            return std::move(*this);
        } 
        else { 
@@ -436,37 +435,37 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
    4 ~template <class F> constexpr auto transform(F&& f) const&&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F,void>>~. 
+    Let U be ~remove_cvref_t<invoke_result_t<F>>~. 
 
     /Constraints:/ ~is_same_v<U::error_type, E>~ is true. E models ~copy_constructible~ for the first two overloads and ~move_constructible~ for the second two overloads.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) {
-          return expected<U,E>(in_place, std::forward<F>(f)());
+       if (has_value()) {
+          return expected<U,E>(std::forward<F>(f)());
        }
-       else { 
-          return std::move(*this);
+       else {
+         return U(unexpect, std::move(error()));
        }
 #+END_SRC
 
-    1 ~template <class F> constexpr auto transform_or(F&& f) &;~
+    1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
-    2 ~template <class F> constexpr auto transform_or(F&& f) const&;~
+    2 ~template <class F> constexpr auto transform_error(F&& f) const&;~
 
-    3 ~template <class F> constexpr auto transform_or(F&& f) &&;~
+    3 ~template <class F> constexpr auto transform_error(F&& f) &&;~
 
-    4 ~template <class F> constexpr auto transform_or(F&& f) &&;~
+    4 ~template <class F> constexpr auto transform_error(F&& f) &&;~
 
-    Let U be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~. 
+    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~. 
 
     /Constraints:/ E models ~copy_constructible~ for the first two overloads and ~move_constructible~ for the second two overloads.
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (*this) { 
+       if (has_value()) { 
            return std::move(*this);
        } 
        else { 
@@ -482,29 +481,36 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
  - Thanks to Barry Revzin for design and wording feedback.
 * Revision History
 
-| Version |       Date | Changes                                                                         |
-|---------+------------+---------------------------------------------------------------------------------|
-|       0 | 2021-12-12 | Initial Draft                                                                   |
-|---------+------------+---------------------------------------------------------------------------------|
-|       1 | 2022-02-10 | added ~transform_or~                                                            |
-|         |            | allow ~transform~ on ~expected<void, E>~                                        |
-|         |            | updated status of P0323 to plenary approved                                     |
-|         |            | improved examples                                                               |
-|         |            | added missing overloads for ~or_else~                                           |
-|         |            | ~or_else~ signature and wording fixes                                           |
-|         |            | added design discussion of changing return types                                |
-|         |            | variety of wording fixes                                                        |
-|---------+------------+---------------------------------------------------------------------------------|
-|       2 | 2022-03-28 | updates to reference Wakely implmentation and examples                          |
-|         |            | remove uneeded invoke calls from void overloads                                 |
-|         |            | expected.object.swap instead of modifiers in synopsis                           |
-|         |            | change constraint wording to use ~is_copy_constructible_v~ form for consistency |
-|         |            | change Let U for move overloads to ~decltype(std::move(...))~                   |
-|         |            | fix ~transform_or~ and ~or_else~ constraints to be T instead of E               |
-|         |            | remove the ~is_same_v~ constraint on ~transform_or~                             |
-|         |            | change ~tranform_or~ true case to return expected<T,U>                          |
-|         |            |                                                                                 |
-|---------+------------+---------------------------------------------------------------------------------|
+| Version |       Date | Changes                                                                            |
+|---------+------------+------------------------------------------------------------------------------------|
+|       0 | 2021-12-12 | Initial Draft                                                                      |
+|---------+------------+------------------------------------------------------------------------------------|
+|       1 | 2022-02-10 | added ~transform_or~                                                               |
+|         |            | allow ~transform~ on ~expected<void, E>~                                           |
+|         |            | updated status of P0323 to plenary approved                                        |
+|         |            | improved examples                                                                  |
+|         |            | added missing overloads for ~or_else~                                              |
+|         |            | ~or_else~ signature and wording fixes                                              |
+|         |            | added design discussion of changing return types                                   |
+|         |            | variety of wording fixes                                                           |
+|---------+------------+------------------------------------------------------------------------------------|
+|       2 | 2022-04-15 | updates to reference Wakely implmentation and examples                             |
+|         |            | remove unneeded invoke calls from void overloads                                   |
+|         |            | ~expected.object.swap~ instead of modifiers in synopsis                            |
+|         |            | change constraint wording to use ~is_copy_constructible_v~ form for consistency    |
+|         |            | change Let U for move overloads to ~decltype(std::move(...))~                      |
+|         |            | fix ~transform_error~ and ~or_else~ constraints to be T instead of E               |
+|         |            | rename ~transform_or~ to ~transform_error~                                         |
+|         |            | remove the ~is_same_v~ constraint on ~transform_error~                             |
+|         |            | change ~tranform_error~ true case to return ~expected<T,U>~                        |
+|         |            | remove note: U will implicitly model either copy or move constructible...          |
+|         |            | change all the ~if (*this)~ to ~if (has_value())~ to match latest expected wording |
+|         |            | remove the ~in_place~ tag in ~transform~ overloads                                 |
+|         |            | remove void from ~invoke_results~ for ~expected<void,E> and_then~ and ~transform~. |
+|         |            | change error returns for ~and_then~/~transform~ to ~return U(unexpect, error())~   |
+|         |            | change Let U to Let G for ~transform_error~ and ~or_else~ for less confusion       |
+|---------+------------+------------------------------------------------------------------------------------|
+
 
 * References
   1. [P0798] Sy Brand "Monadic Functions for std::optional" https://wg21.link/P0798

@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2022-03-29 Tue 06:28 -->
+<!-- 2022-04-15 Fri 17:03 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D2505R2 Monadic Functions for <code>std::expected</code></title>
+<title>P2505R2 Monadic Functions for <code>std::expected</code></title>
 <meta name="generator" content="Org mode" />
 <meta name="author" content="Jeff Garland" />
 <style type="text/css">
@@ -248,34 +248,34 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">D2505R2 Monadic Functions for <code>std::expected</code></h1>
+<h1 class="title">P2505R2 Monadic Functions for <code>std::expected</code></h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgfef6c3b">Introduction</a></li>
-<li><a href="#orga7ffe06">Motivation and Scope</a></li>
-<li><a href="#orgbf60c72">Design Considerations</a>
+<li><a href="#org36a08c7">Introduction</a></li>
+<li><a href="#org992bead">Motivation and Scope</a></li>
+<li><a href="#orgbec2749">Design Considerations</a>
 <ul>
-<li><a href="#org9866ed7"><code>expected&lt;void, E&gt;</code></a></li>
-<li><a href="#org37055ad"><code>transform_or</code> function</a></li>
-<li><a href="#orgb902ee8">changing of error return types</a></li>
+<li><a href="#org8f016e9"><code>expected&lt;void, E&gt;</code></a></li>
+<li><a href="#orge75186a"><code>transform_error</code> function</a></li>
+<li><a href="#org0d12e01">changing of error return types</a></li>
 </ul>
 </li>
-<li><a href="#org1d56e85">Other Languages</a></li>
-<li><a href="#orga492cbc">Implementations</a></li>
-<li><a href="#org9f64fe6">Wording</a>
+<li><a href="#orga7381f5">Other Languages</a></li>
+<li><a href="#orgb10447a">Implementations</a></li>
+<li><a href="#org45b2a56">Wording</a>
 <ul>
-<li><a href="#orgbfa1f59">Feature Test Macro</a></li>
-<li><a href="#org4914591">Class template expected [expected.expected]</a></li>
-<li><a href="#org126e40d">Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]</a></li>
-<li><a href="#org99212cd">Partial specialization of expected for void types [expected.void]</a></li>
-<li><a href="#org3a9f0a7">Partial specialization of expected for void [expected.void.observe]</a></li>
+<li><a href="#org54b60cf">Feature Test Macro</a></li>
+<li><a href="#org5e30101">Class template expected [expected.expected]</a></li>
+<li><a href="#orgfd397bf">Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]</a></li>
+<li><a href="#org0ba6897">Partial specialization of expected for void types [expected.void]</a></li>
+<li><a href="#org6952f35">Partial specialization of expected for void [expected.void.observe]</a></li>
 </ul>
 </li>
-<li><a href="#org870c915">Acknowledgements</a></li>
-<li><a href="#org028d437">Revision History</a></li>
-<li><a href="#orge90cc2f">References</a></li>
+<li><a href="#orgbc8a35d">Acknowledgements</a></li>
+<li><a href="#orgf13e707">Revision History</a></li>
+<li><a href="#org79b3a22">References</a></li>
 </ul>
 </div>
 </div>
@@ -300,9 +300,9 @@ for the JavaScript code in this tag.
 </p>
 
 
-<div id="outline-container-orgfef6c3b" class="outline-2">
-<h2 id="orgfef6c3b">Introduction</h2>
-<div class="outline-text-2" id="text-orgfef6c3b">
+<div id="outline-container-org36a08c7" class="outline-2">
+<h2 id="org36a08c7">Introduction</h2>
+<div class="outline-text-2" id="text-org36a08c7">
 <p>
 With the final plenary vote of <a href="https://wg21.link/P0798">P0798 Monadic Functions for std::optional</a> complete, we now have an design inconsistency with <code>std::expected</code>. <a href="https://wg21.link/P0323">P0323 std::expected</a> has now also been voted into the working draft for C++23. This proposal corrects the inconsistency by adding 4 functions to <code>std::expected</code> and is targeted at C++23.  The author believes this should be treated as a consistency/bug fix still in scope for C++23.
 </p>
@@ -317,9 +317,9 @@ There is a proposal for std::expected which would benefit from many of these sam
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orga7ffe06" class="outline-2">
-<h2 id="orga7ffe06">Motivation and Scope</h2>
-<div class="outline-text-2" id="text-orga7ffe06">
+<div id="outline-container-org992bead" class="outline-2">
+<h2 id="org992bead">Motivation and Scope</h2>
+<div class="outline-text-2" id="text-org992bead">
 <p>
 The following 3 functions are added to <code>std::optional</code>, but are currently not part of <code>std::expected</code>.  
 </p>
@@ -335,7 +335,7 @@ After feedback on the R0, this draft also proposes the addition of a fourth func
 </p>
 
 <ul class="org-ul">
-<li><code>transform_or</code> apply a function to change the value, otherwise call a function with error type</li>
+<li><code>transform_error</code> apply a function to change the value, otherwise call a function with error type</li>
 </ul>
 
 <p>
@@ -435,13 +435,13 @@ For more examples see: <a href="https://godbolt.org/z/K7rbhx9oo">https://godbolt
 </div>
 </div>
 
-<div id="outline-container-orgbf60c72" class="outline-2">
-<h2 id="orgbf60c72">Design Considerations</h2>
-<div class="outline-text-2" id="text-orgbf60c72">
+<div id="outline-container-orgbec2749" class="outline-2">
+<h2 id="orgbec2749">Design Considerations</h2>
+<div class="outline-text-2" id="text-orgbec2749">
 </div>
-<div id="outline-container-org9866ed7" class="outline-3">
-<h3 id="org9866ed7"><code>expected&lt;void, E&gt;</code></h3>
-<div class="outline-text-3" id="text-org9866ed7">
+<div id="outline-container-org8f016e9" class="outline-3">
+<h3 id="org8f016e9"><code>expected&lt;void, E&gt;</code></h3>
+<div class="outline-text-3" id="text-org8f016e9">
 <p>
 Compared with <code>optional</code>, <code>expected</code> provides the capability for <code>void</code> as a function return type. This complicates the design compared to <code>optional</code>.  As currently specified the <code>void</code> specialization of <code>expected</code>, <code>expected&lt;void, T&gt;</code> removes the <code>value_or</code> function since <code>void</code> cannot be initialized to anything else.
 </p>
@@ -452,18 +452,18 @@ While the primary implementation for this paper excludes <code>transform</code> 
 </div>
 </div>
 
-<div id="outline-container-org37055ad" class="outline-3">
-<h3 id="org37055ad"><code>transform_or</code> function</h3>
-<div class="outline-text-3" id="text-org37055ad">
+<div id="outline-container-orge75186a" class="outline-3">
+<h3 id="orge75186a"><code>transform_error</code> function</h3>
+<div class="outline-text-3" id="text-orge75186a">
 <p>
-The R0 version of this paper did not include this function to match optional, but several reviewers noted the important utility of this case. Note that in the reference implementation of this paper, the function is called <code>map_error</code>.
+The R0 version of this paper did not include this function to match optional, but several reviewers noted the important utility of this case. Note that in the reference implementation of this paper, the function is called <code>map_error</code>.  The R1 version of the paper names the function <code>transform_error</code> after discussions with various reviewers.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgb902ee8" class="outline-3">
-<h3 id="orgb902ee8">changing of error return types</h3>
-<div class="outline-text-3" id="text-orgb902ee8">
+<div id="outline-container-org0d12e01" class="outline-3">
+<h3 id="org0d12e01">changing of error return types</h3>
+<div class="outline-text-3" id="text-org0d12e01">
 <p>
 One complication of the monadic functions for <code>expected</code> as compared to <code>optional</code> is the ability to change the return error return type on subsequent function calls.  Optional, of course, can only return <code>std::nullopt_t</code>. 
 </p>
@@ -487,15 +487,15 @@ std::expected&lt;SomeUserType, UserError&gt; result = initialize().or_else( make
 </pre>
 
 <p>
-Note that the changing of the error type applies to the <code>or_else</code> and <code>transform_or</code> overloads only.
+Note that the changing of the error type applies to the <code>or_else</code> and <code>transform_error</code> overloads only.
 </p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1d56e85" class="outline-2">
-<h2 id="org1d56e85">Other Languages</h2>
-<div class="outline-text-2" id="text-org1d56e85">
+<div id="outline-container-orga7381f5" class="outline-2">
+<h2 id="orga7381f5">Other Languages</h2>
+<div class="outline-text-2" id="text-orga7381f5">
 <p>
 Rust provides a result type with similar functions monadic functions.
 </p>
@@ -506,9 +506,9 @@ Rust provides a result type with similar functions monadic functions.
 </div>
 </div>
 
-<div id="outline-container-orga492cbc" class="outline-2">
-<h2 id="orga492cbc">Implementations</h2>
-<div class="outline-text-2" id="text-orga492cbc">
+<div id="outline-container-orgb10447a" class="outline-2">
+<h2 id="orgb10447a">Implementations</h2>
+<div class="outline-text-2" id="text-orgb10447a">
 <p>
 Jonathan Wakely has implemented the full proposal here <a href="https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected">https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected</a>.
 </p>
@@ -519,23 +519,22 @@ The core of the proposal was originally implemented by Sy Brand <a href="https:/
 </div>
 </div>
 
-
-<div id="outline-container-org9f64fe6" class="outline-2">
-<h2 id="org9f64fe6">Wording</h2>
-<div class="outline-text-2" id="text-org9f64fe6">
+<div id="outline-container-org45b2a56" class="outline-2">
+<h2 id="org45b2a56">Wording</h2>
+<div class="outline-text-2" id="text-org45b2a56">
 </div>
-<div id="outline-container-orgbfa1f59" class="outline-3">
-<h3 id="orgbfa1f59">Feature Test Macro</h3>
-<div class="outline-text-3" id="text-orgbfa1f59">
+<div id="outline-container-org54b60cf" class="outline-3">
+<h3 id="org54b60cf">Feature Test Macro</h3>
+<div class="outline-text-3" id="text-org54b60cf">
 <p>
 Update the <code>__cpp_lib_expected</code> feature test macro from P0323.  Although this could be considered optional since expected is not yet a c++ feature in any implementations.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org4914591" class="outline-3">
-<h3 id="org4914591">Class template expected [expected.expected]</h3>
-<div class="outline-text-3" id="text-org4914591">
+<div id="outline-container-org5e30101" class="outline-3">
+<h3 id="org5e30101">Class template expected [expected.expected]</h3>
+<div class="outline-text-3" id="text-org5e30101">
 <p>
 After <code>value_or</code> functions add the new functions:
 </p>
@@ -556,19 +555,19 @@ After <code>value_or</code> functions add the new functions:
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;&amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;&amp;;
 <span style="color: #b22222;">// </span><span style="color: #b22222;">[expected.object.swap], swap</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org126e40d" class="outline-3">
-<h3 id="org126e40d">Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]</h3>
-<div class="outline-text-3" id="text-org126e40d">
+<div id="outline-container-orgfd397bf" class="outline-3">
+<h3 id="orgfd397bf">Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]</h3>
+<div class="outline-text-3" id="text-orgfd397bf">
 <p>
 1 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -600,11 +599,11 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(value())&gt;&gt;
 </p></li>
 </ul>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
    <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value());
 }
 <span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> *<span style="color: #a020f0;">this</span>;
+   <span style="color: #a020f0;">return</span> U(unexpect, error());
 }
 </pre>
 </div>
@@ -638,11 +637,11 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(value(
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
    <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), <span style="color: #008b8b;">std</span>::move(value()));
 }
-<span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
+<span style="color: #a020f0;">else</span> {
+   <span style="color: #a020f0;">return</span> U(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
@@ -655,28 +654,28 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(value(
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>.
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>.
 </p>
 
 <p>
 <i>Constraints:</i>
 </p>
 <ul class="org-ul">
-<li><code>is_same_v&lt;U::value_type, T&gt;</code> is <code>true</code>,</li>
+<li><code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>,</li>
 <li><code>is_copy_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_copy_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
+<li><code>is_copy_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
 </ul>
 
 <p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> G is a specialization of <code>expected</code>.
 </p>
 
 <p>
 Effects: Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) {
-    <span style="color: #a020f0;">return</span> U(value());
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) {
+    <span style="color: #a020f0;">return</span> G(value());
 } <span style="color: #a020f0;">else</span> {
     <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(), error());
 }
@@ -692,27 +691,27 @@ Effects: Equivalent to:
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>. 
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>. 
 </p>
 
 <p>
 <i>Constraints:</i>
 </p>
 <ul class="org-ul">
-<li><code>is_same_v&lt;U::value_type, T&gt;</code> is <code>true</code>,</li>
+<li><code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>,</li>
 <li><code>is_move_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_move_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
+<li><code>is_move_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
 </ul>
 
 <p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> G is a specialization of <code>expected</code>.
 </p>
 
 <p>
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
    <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
 }
 <span style="color: #a020f0;">else</span> { 
@@ -745,11 +744,11 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) {
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(in_place, invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value()));
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) {
+   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value()));
 }
-<span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> *<span style="color: #a020f0;">this</span>;
+<span style="color: #a020f0;">else</span> {
+   <span style="color: #a020f0;">return</span> U(unexpect, error());
 }
 </pre>
 </div>
@@ -779,24 +778,24 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(in_place, invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), <span style="color: #008b8b;">std</span>::move(value())));
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
+   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), <span style="color: #008b8b;">std</span>::move(value())));
 }
 <span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
+   <span style="color: #a020f0;">return</span> U(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
 <p>
-1 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) &amp;;</code>
+1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;;</code>
 </p>
 
 <p>
-2 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) const&amp;;</code>
+2 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) const&amp;;</code>
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
 </p>
 
 <p>
@@ -804,15 +803,15 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 <ul class="org-ul">
 <li><code>is_copy_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_copy_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
+<li><code>is_copy_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
 </ul>
 
 <p>
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
-    <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T, U&gt;(value());
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
+    <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T, G&gt;(value());
 } 
 <span style="color: #a020f0;">else</span> { 
    <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)(<span style="color: #228b22;">error</span>()));
@@ -820,15 +819,15 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </pre>
 </div>
 <p>
-1 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) &amp;&amp;;</code>
+1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
 
 <p>
-2 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) const&amp;&amp;;</code>
+2 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) const&amp;&amp;;</code>
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>.
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>.
 </p>
 
 <p>
@@ -836,15 +835,15 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 </p>
 <ul class="org-ul">
 <li><code>is_move_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_move_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
+<li><code>is_move_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
 </ul>
 
 <p>
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T, U&gt;(<span style="color: #008b8b;">std</span>::move(value()))
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
+   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T, G&gt;(<span style="color: #008b8b;">std</span>::move(value()))
 }
 <span style="color: #a020f0;">else</span> { 
    <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">move</span>(<span style="color: #a0522d;">error</span>())));
@@ -854,9 +853,9 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 </div>
 </div>
 
-<div id="outline-container-org99212cd" class="outline-3">
-<h3 id="org99212cd">Partial specialization of expected for void types [expected.void]</h3>
-<div class="outline-text-3" id="text-org99212cd">
+<div id="outline-container-org0ba6897" class="outline-3">
+<h3 id="org0ba6897">Partial specialization of expected for void types [expected.void]</h3>
+<div class="outline-text-3" id="text-org0ba6897">
 <p>
 After �.�.8.6, observers &#x2013; add
 </p>
@@ -875,17 +874,17 @@ After �.�.8.6, observers &#x2013; add
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;&amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
-<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_or(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;&amp;;
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org3a9f0a7" class="outline-3">
-<h3 id="org3a9f0a7">Partial specialization of expected for void [expected.void.observe]</h3>
-<div class="outline-text-3" id="text-org3a9f0a7">
+<div id="outline-container-org6952f35" class="outline-3">
+<h3 id="org6952f35">Partial specialization of expected for void [expected.void.observe]</h3>
+<div class="outline-text-3" id="text-org6952f35">
 <p>
 After section �.�.8.5 Observers [expected.void.observe]
 </p>
@@ -911,11 +910,11 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F,void&gt;&gt;</code>. 
+Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>. 
 </p>
 
 <p>
-<i>Constraints:</i> <code>is_same_v&lt;U::error_type, E&gt;</code> is true. E models <code>copy_constructible</code> for the first two overloads and <code>move_constructible</code> for the second two overloads. [ <i>Note:</i> U will implicitly model either copy or move constructible since U is <code>expected&lt;void, E&gt;</code> &#x2013; <i>end note</i> ].
+<i>Constraints:</i> <code>is_same_v&lt;U::error_type, E&gt;</code> is true. E models <code>copy_constructible</code> for the first two overloads and <code>move_constructible</code> for the second two overloads.
 </p>
 
 <p>
@@ -926,11 +925,11 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F,void&gt;&gt;</code>.
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
    <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)());
 }
 <span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
+   <span style="color: #a020f0;">return</span> U(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
@@ -952,7 +951,7 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F,void&gt;&gt;</code>.
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
 </p>
 
 <p>
@@ -960,14 +959,14 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 
 <p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> G is a specialization of <code>expected</code>.
 </p>
 
 <p>
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
     <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
 } 
 <span style="color: #a020f0;">else</span> { 
@@ -994,7 +993,7 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F,void&gt;&gt;</code>. 
+Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>. 
 </p>
 
 <p>
@@ -1005,33 +1004,33 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F,void&gt;&gt;</code>.
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) {
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(in_place, <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)());
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) {
+   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)());
 }
-<span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
+<span style="color: #a020f0;">else</span> {
+  <span style="color: #a020f0;">return</span> U(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
 
 <p>
-1 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) &amp;;</code>
+1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;;</code>
 </p>
 
 <p>
-2 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) const&amp;;</code>
+2 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) const&amp;;</code>
 </p>
 
 <p>
-3 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) &amp;&amp;;</code>
+3 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
 
 <p>
-4 <code>template &lt;class F&gt; constexpr auto transform_or(F&amp;&amp; f) &amp;&amp;;</code>
+4 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
 </p>
 
 <p>
@@ -1039,14 +1038,14 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 
 <p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> G is a specialization of <code>expected</code>.
 </p>
 
 <p>
 <i>Effects:</i> Equivalent to:
 </p>
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (*<span style="color: #a020f0;">this</span>) { 
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
     <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
 } 
 <span style="color: #a020f0;">else</span> { 
@@ -1058,9 +1057,9 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </div>
 </div>
 
-<div id="outline-container-org870c915" class="outline-2">
-<h2 id="org870c915">Acknowledgements</h2>
-<div class="outline-text-2" id="text-org870c915">
+<div id="outline-container-orgbc8a35d" class="outline-2">
+<h2 id="orgbc8a35d">Acknowledgements</h2>
+<div class="outline-text-2" id="text-orgbc8a35d">
 <ul class="org-ul">
 <li>Thanks to Jonathan Wakely for implemenation and wording feedback.</li>
 <li>Thanks to Sy Brand for the original work on optional and expected.</li>
@@ -1070,9 +1069,9 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </ul>
 </div>
 </div>
-<div id="outline-container-org028d437" class="outline-2">
-<h2 id="org028d437">Revision History</h2>
-<div class="outline-text-2" id="text-org028d437">
+<div id="outline-container-orgf13e707" class="outline-2">
+<h2 id="orgf13e707">Revision History</h2>
+<div class="outline-text-2" id="text-orgf13e707">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -1149,20 +1148,20 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 <tbody>
 <tr>
 <td class="org-right">2</td>
-<td class="org-right">2022-03-28</td>
+<td class="org-right">2022-04-15</td>
 <td class="org-left">updates to reference Wakely implmentation and examples</td>
 </tr>
 
 <tr>
 <td class="org-right">&#xa0;</td>
 <td class="org-right">&#xa0;</td>
-<td class="org-left">remove uneeded invoke calls from void overloads</td>
+<td class="org-left">remove unneeded invoke calls from void overloads</td>
 </tr>
 
 <tr>
 <td class="org-right">&#xa0;</td>
 <td class="org-right">&#xa0;</td>
-<td class="org-left">expected.object.swap instead of modifiers in synopsis</td>
+<td class="org-left"><code>expected.object.swap</code> instead of modifiers in synopsis</td>
 </tr>
 
 <tr>
@@ -1180,34 +1179,71 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 <tr>
 <td class="org-right">&#xa0;</td>
 <td class="org-right">&#xa0;</td>
-<td class="org-left">fix <code>transform_or</code> and <code>or_else</code> constraints to be T instead of E</td>
+<td class="org-left">fix <code>transform_error</code> and <code>or_else</code> constraints to be T instead of E</td>
 </tr>
 
 <tr>
 <td class="org-right">&#xa0;</td>
 <td class="org-right">&#xa0;</td>
-<td class="org-left">remove the <code>is_same_v</code> constraint on <code>transform_or</code></td>
+<td class="org-left">rename <code>transform_or</code> to <code>transform_error</code></td>
 </tr>
 
 <tr>
 <td class="org-right">&#xa0;</td>
 <td class="org-right">&#xa0;</td>
-<td class="org-left">change <code>tranform_or</code> true case to return expected&lt;T,U&gt;</td>
+<td class="org-left">remove the <code>is_same_v</code> constraint on <code>transform_error</code></td>
 </tr>
 
 <tr>
 <td class="org-right">&#xa0;</td>
 <td class="org-right">&#xa0;</td>
-<td class="org-left">&#xa0;</td>
+<td class="org-left">change <code>tranform_error</code> true case to return <code>expected&lt;T,U&gt;</code></td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">remove note: U will implicitly model either copy or move constructible&#x2026;</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">change all the <code>if (*this)</code> to <code>if (has_value())</code> to match latest expected wording</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">remove the <code>in_place</code> tag in <code>transform</code> overloads</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">remove void from <code>invoke_results</code> for <code>expected&lt;void,E&gt; and_then</code> and <code>transform</code>.</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">change error returns for <code>and_then~/~transform</code> to <code>return U(unexpect, error())</code></td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">change Let U to Let G for <code>transform_error</code> and <code>or_else</code> for less confusion</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 
-<div id="outline-container-orge90cc2f" class="outline-2">
-<h2 id="orge90cc2f">References</h2>
-<div class="outline-text-2" id="text-orge90cc2f">
+
+<div id="outline-container-org79b3a22" class="outline-2">
+<h2 id="org79b3a22">References</h2>
+<div class="outline-text-2" id="text-org79b3a22">
 <ol class="org-ol">
 <li>[P0798] Sy Brand "Monadic Functions for std::optional" <a href="https://wg21.link/P0798">https://wg21.link/P0798</a></li>
 <li>C++ draft [optional.nomadic] <a href="http://eel.is/c++draft/optional.monadic">http://eel.is/c++draft/optional.monadic</a></li>
@@ -1224,7 +1260,7 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Jeff Garland</p>
-<p class="date">Created: 2022-03-29 Tue 06:28</p>
+<p class="date">Created: 2022-04-15 Fri 17:03</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

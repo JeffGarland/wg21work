@@ -218,11 +218,9 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~remove_cvref_t<invoke_result_t<F, decltype(value())>>~.
 
-    /Constraints:/ 
-   - ~is_same_v<U::error_type, E>~ is ~true~, 
-   - ~is_copy_constructible_v<E>~ is ~true~
+    /Constraints:/ ~is_copy_constructible_v<E>~ is ~true~
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ U is a specialization of ~expected~ and ~is_same_v<U::error_type, E>~ is ~true~,
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -240,11 +238,9 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(value()))>>~.
 
-    /Constraints:/
-       - ~is_same_v<U::error_type, E>~ is ~true~, 
-       - ~is_move_constructible_v<E>~ is ~true~
+    /Constraints:/ ~is_move_constructible_v<E>~ is ~true~
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ U is a specialization of ~expected~ and ~is_same_v<U::error_type, E>~ is ~true~, 
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -261,11 +257,9 @@ After ~value_or~ functions add the new functions:
 
     Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
 
-    /Constraints:/
-       - ~is_same_v<G::value_type, T>~ is ~true~, 
-       - ~is_copy_constructible_v<T>~ is ~true~. 
+    /Constraints:/  ~is_copy_constructible_v<T>~ is ~true~. 
 
-    /Mandates:/ G is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~ and  ~is_same_v<G::value_type, T>~ is ~true~, 
 
     Effects: Equivalent to:
 #+BEGIN_SRC C++
@@ -282,11 +276,9 @@ After ~value_or~ functions add the new functions:
 
     Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~. 
 
-    /Constraints:/
-       - ~is_same_v<G::value_type, T>~ is ~true~, 
-       - ~is_move_constructible_v<T>~ is ~true~, and
+    /Constraints:/ ~is_move_constructible_v<T>~ is ~true~
 
-    /Mandates:/ G is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~ and ~is_same_v<G::value_type, T>~ is ~true~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -322,8 +314,7 @@ After ~value_or~ functions add the new functions:
 
     /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), std::move(value())));~ is well-formed.
 
-    /Constraints:/
-       - ~is_move_constructible_v<E>~ is ~true~, and
+    /Constraints:/ ~is_move_constructible_v<E>~ is ~true~, and
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~, otherwise
@@ -338,8 +329,7 @@ After ~value_or~ functions add the new functions:
     
     /Mandates:/ G is a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. The declaration ~G g(invoke(std::forward<F>(f), error()));~ is well-formed.
 
-    /Constraints:/
-       - ~is_copy_constructible_v<T>~ is ~true~
+    /Constraints:/ ~is_copy_constructible_v<T>~ is ~true~
 
     /Returns:/ 
       - If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, value())~, otherwise
@@ -353,8 +343,7 @@ After ~value_or~ functions add the new functions:
     
    /Mandates:/ G is a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. The declaration ~G g(invoke(std::forward<F>(f), std::move(error())));~ is well-formed.
 
-    /Constraints:/
-       - ~is_move_constructible_v<T>~ is ~true~, and
+    /Constraints:/ ~is_move_constructible_v<T>~ is ~true~, and
 
     /Returns:/ 
       - If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, std::move(value()))~, otherwise
@@ -393,11 +382,9 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let U be ~remove_cvref_t<invoke_result_t<F>>~.
 
-    /Constraints:/ 
-   - ~is_same_v<U::error_type, E>~ is ~true~, 
-   - ~is_copy_constructible_v<E>~ is ~true~
+    /Constraints:/ ~is_copy_constructible_v<E>~ is ~true~.
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ U is a specialization of ~expected~ and  ~is_same_v<U::error_type, E>~ is ~true~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -415,11 +402,9 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let U be ~remove_cvref_t<invoke_result_t<F>>~.
 
-    /Constraints:/
-       - ~is_same_v<U::error_type, E>~ is ~true~, 
-       - ~is_move_constructible_v<E>~ is ~true~
+    /Constraints:/ ~is_move_constructible_v<E>~ is ~true~
 
-    /Mandates:/ U is a specialization of ~expected~.
+    /Mandates:/ U is a specialization of ~expected~ and ~is_same_v<U::error_type, E>~ is ~true~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -436,10 +421,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
 
-    /Constraints:/
-       - ~is_same_v<G::value_type, T>~ is ~true~, 
-
-    /Mandates:/ G is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~ and ~is_same_v<G::value_type, T>~ is ~true~.
 
     Effects: Equivalent to:
 #+BEGIN_SRC C++
@@ -456,10 +438,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~. 
 
-    /Constraints:/
-       - ~is_same_v<G::value_type, T>~ is ~true~, 
-
-    /Mandates:/ G is a specialization of ~expected~.
+    /Mandates:/ G is a specialization of ~expected~ and is_same_v<G::value_type, T>~ is ~true~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -478,8 +457,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
-    /Constraints:/
-       - ~is_copy_constructible_v<E>~ is ~true~, and
+    /Constraints:/ ~is_copy_constructible_v<E>~ is ~true~
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~, otherwise
@@ -495,8 +473,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
-    /Constraints:/
-       - ~is_move_constructible_v<E>~ is ~true~, and
+    /Constraints:/ ~is_move_constructible_v<E>~ is ~true~, and
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~, otherwise

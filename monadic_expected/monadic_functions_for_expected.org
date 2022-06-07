@@ -270,7 +270,7 @@ After ~value_or~ functions add the new functions:
     Effects: Equivalent to:
 #+BEGIN_SRC C++
         if (has_value()) {
-            return value();
+            return G(in_place, value());
         } else {
             return invoke(std::forward<F>(), error());
         }
@@ -291,19 +291,19 @@ After ~value_or~ functions add the new functions:
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
        if (has_value()) { 
-          return std::move(*this);
+          return G(in_place, std::move(value()));
        }
        else { 
           return invoke(std::forward<F>(f), std::move(error()));
        }
 #+END_SRC
-v   1 ~template <class F> constexpr auto transform(F&& f) &;~
+   1 ~template <class F> constexpr auto transform(F&& f) &;~
 
    2 ~template <class F> constexpr auto transform(F&& f) const&;~
 
     Let U be ~remove_cvref_t<invoke_result_t<F, decltype(value())>>~.
 
-    /Mandates:/ U is a `void` or non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), value()));~ is well-formed.
+    /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), value()));~ is well-formed.
 
     /Constraints:/
        - ~is_copy_constructible_v<E>~ is ~true~, and
@@ -357,7 +357,7 @@ v   1 ~template <class F> constexpr auto transform(F&& f) &;~
        - ~is_move_constructible_v<T>~ is ~true~, and
 
     /Returns:/ 
-      - If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, value())~, otherwise
+      - If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, std::move(value()))~, otherwise
       - an ~expected<T, G>` object whose `has_val` member is ~false~ and `unex` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~
 
 ** Partial specialization of expected for void types [expected.void]
@@ -476,7 +476,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let U be ~remove_cvref_t<invoke_result_t<F>>~.
 
-    /Mandates:/ U is a `void` or non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
+    /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
     /Constraints:/
        - ~is_copy_constructible_v<E>~ is ~true~, and

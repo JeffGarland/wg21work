@@ -1,5 +1,5 @@
 #+AUTHOR: Jeff Garland
-#+TITLE: D2505R3 Monadic Functions for ~std::expected~
+#+TITLE: P2505R3 Monadic Functions for ~std::expected~
 #+EMAIL: jeff@crystalclearsoftware.com
 #+REVISION: 1
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup

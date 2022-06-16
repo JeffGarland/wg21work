@@ -1,5 +1,5 @@
 #+AUTHOR: Jeff Garland
-#+TITLE: P2505R3 Monadic Functions for ~std::expected~
+#+TITLE: D2505R4 Monadic Functions for ~std::expected~
 #+EMAIL: jeff@crystalclearsoftware.com
 #+REVISION: 1
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
@@ -154,6 +154,9 @@ This question has been asked several times including in the LEWG 2022-05-03 meet
 
 It has been suggested that ~error_or~ functions be added to the proposal.  While the author is sympathetic to the suggestion, since consistency with ~optional~ for c++23 is the intent these are not proposed. These can be added later or if LEWG would prefer the author can investigate adding them in this cycle.
 
+At 2022-06-07 LEWG telecom poll was taken to add this function.
+
+
 ** Free versus member functions
 One design question that has been raised is the use of member functions instead of free functions. The author is sympathetic to this view, but believes this can only be done by changing both ~optional~ and ~expected~.  The expressed benefits of free functions would be:
 
@@ -295,15 +298,15 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~remove_cvref_t<invoke_result_t<F, decltype(value())>>~.
 
-    /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), value()));~ is well-formed.
+    /Mandates:/ U is ~void~ or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), value()));~ is well-formed.
 
     /Constraints:/
        - ~is_copy_constructible_v<E>~ is ~true~, and
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~, otherwise
-      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>` object whose `has_val` member is ~true~ and `val` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~, otherwise
-      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns `expected<U,E>()`.
+      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~, otherwise
+      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
 
 
     1 ~template <class F> constexpr auto transform(F&& f) &&;~
@@ -312,14 +315,14 @@ After ~value_or~ functions add the new functions:
 
     Let U be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(value()))>>~.
 
-    /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), std::move(value())));~ is well-formed.
+    /Mandates:/ U is ~void~ or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), std::move(value())));~ is well-formed.
 
     /Constraints:/ ~is_move_constructible_v<E>~ is ~true~, and
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~, otherwise
-      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>` object whose `has_val` member is ~true~ and `val` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~, otherwise
-      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns `expected<U,E>()`.
+      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~, otherwise
+      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
@@ -333,7 +336,7 @@ After ~value_or~ functions add the new functions:
 
     /Returns:/ 
       - If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, value())~, otherwise
-      - an ~expected<T, G>` object whose `has_val` member is ~false~ and `unex` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), error())~, otherwise
+      - an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), error())~, otherwise
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &&;~
 
@@ -347,7 +350,7 @@ After ~value_or~ functions add the new functions:
 
     /Returns:/ 
       - If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, std::move(value()))~, otherwise
-      - an ~expected<T, G>` object whose `has_val` member is ~false~ and `unex` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~
+      - an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~
 
 ** Partial specialization of expected for void types [expected.void]
 After �.�.8.6, observers -- add
@@ -438,7 +441,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~. 
 
-    /Mandates:/ G is a specialization of ~expected~ and is_same_v<G::value_type, T>~ is ~true~.
+    /Mandates:/ G is a specialization of ~expected~ and ~is_same_v<G::value_type, T>~ is ~true~.
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
@@ -455,14 +458,14 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let U be ~remove_cvref_t<invoke_result_t<F>>~.
 
-    /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
+    /Mandates:/ U is ~void~ or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
     /Constraints:/ ~is_copy_constructible_v<E>~ is ~true~
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~, otherwise
-      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>` object whose `has_val` member is ~true~ and `val` member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~, otherwise
-      - evaluates ~invoke(std::forward<F>(f))~ and then returns `expected<U,E>()`.
+      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~, otherwise
+      - evaluates ~invoke(std::forward<F>(f))~ and then returns ~expected<U,E>()~.
 
 
     1 ~template <class F> constexpr auto transform(F&& f) &&;~
@@ -471,14 +474,14 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     Let U be ~remove_cvref_t<invoke_result_t<F>>~.
 
-    /Mandates:/ U is `void` or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
+    /Mandates:/ U is ~void~ or a non-array object type other than ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
     /Constraints:/ ~is_move_constructible_v<E>~ is ~true~, and
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~, otherwise
-      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>` object whose `has_val` member is ~true~ and `val` member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~, otherwise
-      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns `expected<U,E>()`.
+      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~, otherwise
+      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
@@ -490,7 +493,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     /Returns:/ 
       - If ~has_value()~ is ~true~,  ~expected<T,G>()~, otherwise
-      - an ~expected<T, G>` object whose `has_val` member is ~false~ and `unex` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), error())~, otherwise
+      - an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), error())~, otherwise
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &&;~
 
@@ -502,8 +505,7 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 
     /Returns:/ 
       - If ~has_value()~ is ~true~,  ~expected<T,G>()~, otherwise
-      - an ~expected<T, G>` object whose `has_val` member is ~false~ and `unex` member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~
-
+      - an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~
 
 * Acknowledgements
  - Thanks to Jonathan Wakely for implementation and wording feedback.
@@ -548,6 +550,9 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 |         |            | mandate ~transform~ return type not be ~unexpected~, ~inplace_t~, etc              |
 |         |            | design discussion and wording for ~transform~ to ~expected<void, E>~               |
 |         |            | design discussion of ~error_or~ functions                                          |
+|---------+------------+------------------------------------------------------------------------------------|
+|       4 | 2022-06-07 | Add an ~error_or~ function that mirrors ~value_or~ for basic case                  |
+|         |            | Incorporate wording suggestions from Tomasz K.                                     |
 |---------+------------+------------------------------------------------------------------------------------|
 
 

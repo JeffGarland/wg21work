@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2022-06-07 Tue 09:27 -->
+<!-- 2022-06-16 Thu 15:10 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>P2505R3 Monadic Functions for <code>std::expected</code></title>
+<title>D2505R4 Monadic Functions for <code>std::expected</code></title>
 <meta name="generator" content="Org mode" />
 <meta name="author" content="Jeff Garland" />
 <link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
@@ -64,38 +64,40 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">P2505R3 Monadic Functions for <code>std::expected</code></h1>
+<h1 class="title">D2505R4 Monadic Functions for <code>std::expected</code></h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orge87bf80">Introduction</a></li>
-<li><a href="#orga1678b6">Motivation and Scope</a></li>
-<li><a href="#orga08473f">Design Considerations</a>
+<li><a href="#org3df2b70">Introduction</a></li>
+<li><a href="#org20501fb">Motivation and Scope</a></li>
+<li><a href="#orgcc9c50b">Design Considerations</a>
 <ul>
-<li><a href="#orgc883db6"><code>expected&lt;void, E&gt;</code></a></li>
-<li><a href="#org6688dee"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</a></li>
-<li><a href="#org06b99e5"><code>transform_error</code> function</a></li>
-<li><a href="#org9d69c61">Changing of error return types</a></li>
-<li><a href="#org52dcb22">Use of deducing-this in the specification</a></li>
-<li><a href="#orgd7a01e6">Adding <code>error_or</code> functions</a></li>
-<li><a href="#org26cd6ac">Free versus member functions</a></li>
+<li><a href="#org1d7ef91"><code>expected&lt;void, E&gt;</code></a></li>
+<li><a href="#org4383343"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</a></li>
+<li><a href="#orgfdff44a"><code>transform_error</code> function</a></li>
+<li><a href="#org6a47d15">Changing of error return types</a></li>
+<li><a href="#orgae84506">Use of deducing-this in the specification</a></li>
+<li><a href="#org7495d04">Adding <code>error_or</code> functions</a></li>
+<li><a href="#org928bcfe">Free versus member functions</a></li>
 </ul>
 </li>
-<li><a href="#org6a4b00c">Other Languages</a></li>
-<li><a href="#orgc81566f">Implementations</a></li>
-<li><a href="#orge4c83ab">Wording</a>
+<li><a href="#org830180c">Other Languages</a></li>
+<li><a href="#org27522c0">Implementations</a></li>
+<li><a href="#org7c3be85">Wording</a>
 <ul>
-<li><a href="#org91979df">Feature Test Macro</a></li>
-<li><a href="#orge2286f8">Class template expected [expected.expected]</a></li>
-<li><a href="#org618d973">Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]</a></li>
-<li><a href="#org75bac66">Partial specialization of expected for void types [expected.void]</a></li>
-<li><a href="#org9e5ae64">Partial specialization of expected for void [expected.void.observe]</a></li>
+<li><a href="#orga89aac3">Feature Test Macro</a></li>
+<li><a href="#org48d9633">Class template expected [expected.expected]</a></li>
+<li><a href="#orgb146b06">Add following at the end [expected.object.observe] Observers:</a></li>
+<li><a href="#orgdb3c993">Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.observe] and [expected.object.eq]</a></li>
+<li><a href="#org85d3693">Partial specialization of expected for void types [expected.void]</a></li>
+<li><a href="#org1b0a41d">Add following at the end [expected.void.observe] Observers:</a></li>
+<li><a href="#org750ba2d">Add a new section [expected.void.monadic] Monadic operations [expected.void.observe] and [expected.void.eq]</a></li>
 </ul>
 </li>
-<li><a href="#org8624083">Acknowledgements</a></li>
-<li><a href="#org927252a">Revision History</a></li>
-<li><a href="#org283a512">References</a></li>
+<li><a href="#orgcb92b32">Acknowledgements</a></li>
+<li><a href="#org8d2e16f">Revision History</a></li>
+<li><a href="#org7f9f5b7">References</a></li>
 </ul>
 </div>
 </div>
@@ -120,9 +122,9 @@ for the JavaScript code in this tag.
 </p>
 
 
-<div id="outline-container-orge87bf80" class="outline-2">
-<h2 id="orge87bf80">Introduction</h2>
-<div class="outline-text-2" id="text-orge87bf80">
+<div id="outline-container-org3df2b70" class="outline-2">
+<h2 id="org3df2b70">Introduction</h2>
+<div class="outline-text-2" id="text-org3df2b70">
 <p>
 With the final plenary vote of <a href="https://wg21.link/P0798">P0798 Monadic Functions for std::optional</a> complete, we now have an design inconsistency with <code>std::expected</code>. <a href="https://wg21.link/P0323">P0323 std::expected</a> has now also been voted into the working draft for C++23. This proposal corrects the inconsistency by adding 4 functions to <code>std::expected</code> and is targeted at C++23.  The author believes this should be treated as a consistency/bug fix still in scope for C++23.
 </p>
@@ -137,9 +139,9 @@ There is a proposal for std::expected which would benefit from many of these sam
 </blockquote>
 </div>
 </div>
-<div id="outline-container-orga1678b6" class="outline-2">
-<h2 id="orga1678b6">Motivation and Scope</h2>
-<div class="outline-text-2" id="text-orga1678b6">
+<div id="outline-container-org20501fb" class="outline-2">
+<h2 id="org20501fb">Motivation and Scope</h2>
+<div class="outline-text-2" id="text-org20501fb">
 <p>
 The following 3 functions are added to <code>std::optional</code>, but are currently not part of <code>std::expected</code>.  
 </p>
@@ -151,11 +153,12 @@ The following 3 functions are added to <code>std::optional</code>, but are curre
 </ul>
 
 <p>
-After feedback on the R0, this draft also proposes the addition of a fourth function for <code>expected</code> to facilitate additional cases:
+After feedback, this draft also proposes the addition of two additional functions for <code>expected</code> to facilitate additional cases:
 </p>
 
 <ul class="org-ul">
 <li><code>transform_error</code> apply a function to change the value, otherwise call a function with error type</li>
+<li><code>error_or</code>        a value to return when there is not an error</li>
 </ul>
 
 <p>
@@ -255,13 +258,13 @@ For more examples see: <a href="https://godbolt.org/z/K7rbhx9oo">https://godbolt
 </div>
 </div>
 
-<div id="outline-container-orga08473f" class="outline-2">
-<h2 id="orga08473f">Design Considerations</h2>
-<div class="outline-text-2" id="text-orga08473f">
+<div id="outline-container-orgcc9c50b" class="outline-2">
+<h2 id="orgcc9c50b">Design Considerations</h2>
+<div class="outline-text-2" id="text-orgcc9c50b">
 </div>
-<div id="outline-container-orgc883db6" class="outline-3">
-<h3 id="orgc883db6"><code>expected&lt;void, E&gt;</code></h3>
-<div class="outline-text-3" id="text-orgc883db6">
+<div id="outline-container-org1d7ef91" class="outline-3">
+<h3 id="org1d7ef91"><code>expected&lt;void, E&gt;</code></h3>
+<div class="outline-text-3" id="text-org1d7ef91">
 <p>
 Compared with <code>optional</code>, <code>expected</code> provides the capability for <code>void</code> as a function return type. This complicates the design compared to <code>optional</code>.  As currently specified the <code>void</code> specialization of <code>expected</code>, <code>expected&lt;void, T&gt;</code> removes the <code>value_or</code> function since <code>void</code> cannot be initialized to anything else.
 </p>
@@ -272,9 +275,9 @@ While the primary implementation for this paper excludes <code>transform</code> 
 </div>
 </div>
 
-<div id="outline-container-org6688dee" class="outline-3">
-<h3 id="org6688dee"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</h3>
-<div class="outline-text-3" id="text-org6688dee">
+<div id="outline-container-org4383343" class="outline-3">
+<h3 id="org4383343"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</h3>
+<div class="outline-text-3" id="text-org4383343">
 <p>
 Consider the following code.
 </p>
@@ -291,18 +294,18 @@ The original specifications and implementations would fail to compile this code.
 </div>
 </div>
 
-<div id="outline-container-org06b99e5" class="outline-3">
-<h3 id="org06b99e5"><code>transform_error</code> function</h3>
-<div class="outline-text-3" id="text-org06b99e5">
+<div id="outline-container-orgfdff44a" class="outline-3">
+<h3 id="orgfdff44a"><code>transform_error</code> function</h3>
+<div class="outline-text-3" id="text-orgfdff44a">
 <p>
 The R0 version of this paper did not include this function to match optional, but several reviewers noted the important utility of this case. Note that in the reference implementation of this paper, the function is called <code>map_error</code>.  The R1 version of the paper names the function <code>transform_error</code> after discussions with various reviewers.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org9d69c61" class="outline-3">
-<h3 id="org9d69c61">Changing of error return types</h3>
-<div class="outline-text-3" id="text-org9d69c61">
+<div id="outline-container-org6a47d15" class="outline-3">
+<h3 id="org6a47d15">Changing of error return types</h3>
+<div class="outline-text-3" id="text-org6a47d15">
 <p>
 One complication of the monadic functions for <code>expected</code> as compared to <code>optional</code> is the ability to change the return error return type on subsequent function calls.  Optional, of course, can only return <code>std::nullopt_t</code>. 
 </p>
@@ -331,27 +334,32 @@ Note that the changing of the error type applies to the <code>or_else</code> and
 </div>
 </div>
 
-<div id="outline-container-org52dcb22" class="outline-3">
-<h3 id="org52dcb22">Use of deducing-this in the specification</h3>
-<div class="outline-text-3" id="text-org52dcb22">
+<div id="outline-container-orgae84506" class="outline-3">
+<h3 id="orgae84506">Use of deducing-this in the specification</h3>
+<div class="outline-text-3" id="text-orgae84506">
 <p>
 This question has been asked several times including in the LEWG 2022-05-03 meeting.  While less concise, the author prefers to keep the specification consistent with the rest of the c++23 library and especially <code>std::optional</code>.  Limited access to compilers that implement deducing-this make it difficult to confirm correct behavior of a deducing-this based specification.  In addition, the current specification does not preclude changing to a deducing-this based consistently with other library facilities in a future release.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgd7a01e6" class="outline-3">
-<h3 id="orgd7a01e6">Adding <code>error_or</code> functions</h3>
-<div class="outline-text-3" id="text-orgd7a01e6">
+<div id="outline-container-org7495d04" class="outline-3">
+<h3 id="org7495d04">Adding <code>error_or</code> functions</h3>
+<div class="outline-text-3" id="text-org7495d04">
 <p>
 It has been suggested that <code>error_or</code> functions be added to the proposal.  While the author is sympathetic to the suggestion, since consistency with <code>optional</code> for c++23 is the intent these are not proposed. These can be added later or if LEWG would prefer the author can investigate adding them in this cycle.
+</p>
+
+<p>
+At 2022-06-07 LEWG telecom poll was taken to add this function.  The wording is added in R4 of the paper.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org26cd6ac" class="outline-3">
-<h3 id="org26cd6ac">Free versus member functions</h3>
-<div class="outline-text-3" id="text-org26cd6ac">
+
+<div id="outline-container-org928bcfe" class="outline-3">
+<h3 id="org928bcfe">Free versus member functions</h3>
+<div class="outline-text-3" id="text-org928bcfe">
 <p>
 One design question that has been raised is the use of member functions instead of free functions. The author is sympathetic to this view, but believes this can only be done by changing both <code>optional</code> and <code>expected</code>.  The expressed benefits of free functions would be:
 </p>
@@ -376,9 +384,9 @@ Note that the author's experience with <code>std::expected</code> implementing j
 </div>
 </div>
 
-<div id="outline-container-org6a4b00c" class="outline-2">
-<h2 id="org6a4b00c">Other Languages</h2>
-<div class="outline-text-2" id="text-org6a4b00c">
+<div id="outline-container-org830180c" class="outline-2">
+<h2 id="org830180c">Other Languages</h2>
+<div class="outline-text-2" id="text-org830180c">
 <p>
 Rust provides a result type with similar functions monadic functions.
 </p>
@@ -389,9 +397,9 @@ Rust provides a result type with similar functions monadic functions.
 </div>
 </div>
 
-<div id="outline-container-orgc81566f" class="outline-2">
-<h2 id="orgc81566f">Implementations</h2>
-<div class="outline-text-2" id="text-orgc81566f">
+<div id="outline-container-org27522c0" class="outline-2">
+<h2 id="org27522c0">Implementations</h2>
+<div class="outline-text-2" id="text-org27522c0">
 <p>
 Jonathan Wakely has implemented the full proposal here <a href="https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected">https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected</a>.
 </p>
@@ -402,28 +410,30 @@ The core of the proposal was originally implemented by Sy Brand <a href="https:/
 </div>
 </div>
 
-<div id="outline-container-orge4c83ab" class="outline-2">
-<h2 id="orge4c83ab">Wording</h2>
-<div class="outline-text-2" id="text-orge4c83ab">
+<div id="outline-container-org7c3be85" class="outline-2">
+<h2 id="org7c3be85">Wording</h2>
+<div class="outline-text-2" id="text-org7c3be85">
 </div>
-<div id="outline-container-org91979df" class="outline-3">
-<h3 id="org91979df">Feature Test Macro</h3>
-<div class="outline-text-3" id="text-org91979df">
+<div id="outline-container-orga89aac3" class="outline-3">
+<h3 id="orga89aac3">Feature Test Macro</h3>
+<div class="outline-text-3" id="text-orga89aac3">
 <p>
 Update the <code>__cpp_lib_expected</code> feature test macro from P0323.  Although this could be considered optional since expected is not yet a c++ feature in any implementations.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge2286f8" class="outline-3">
-<h3 id="orge2286f8">Class template expected [expected.expected]</h3>
-<div class="outline-text-3" id="text-orge2286f8">
+<div id="outline-container-org48d9633" class="outline-3">
+<h3 id="org48d9633">Class template expected [expected.expected]</h3>
+<div class="outline-text-3" id="text-org48d9633">
 <p>
 After <code>value_or</code> functions add the new functions:
 </p>
 
 <div class="org-src-container">
 <pre class="src src-C++"><span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">U</span>&gt; constexpr <span style="color: #228b22;">T</span> <span style="color: #0000ff;">value_or</span>(<span style="color: #228b22;">U</span>&amp;&amp;) &amp;&amp;;
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">G</span> = <span style="color: #228b22;">E</span>&gt; constexpr <span style="color: #228b22;">E</span> <span style="color: #0000ff;">error_or</span>(<span style="color: #228b22;">G</span>&amp;&amp;) <span style="color: #a020f0;">const</span>&amp;;
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">G</span> = <span style="color: #228b22;">E</span>&gt; constexpr <span style="color: #228b22;">E</span> <span style="color: #0000ff;">error_or</span>(<span style="color: #228b22;">G</span>&amp;&amp;) &amp;&amp;;
 
 <span style="color: #b22222;">// </span><span style="color: #b22222;">[expected.monadic], monadic operations</span>
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
@@ -448,9 +458,38 @@ After <code>value_or</code> functions add the new functions:
 </div>
 </div>
 
-<div id="outline-container-org618d973" class="outline-3">
-<h3 id="org618d973">Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]</h3>
-<div class="outline-text-3" id="text-org618d973">
+<div id="outline-container-orgb146b06" class="outline-3">
+<h3 id="orgb146b06">Add following at the end [expected.object.observe] Observers:</h3>
+<div class="outline-text-3" id="text-orgb146b06">
+<p>
+1 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) const&amp;;</code>
+</p>
+
+<p>
+<i>Mandates:</i> <code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code> and <code>is_convertible&lt;G, E&gt;</code> is <code>true</code>.
+</p>
+
+<p>
+<i>Returns:</i> <code>std::forward&lt;G&gt;(e)</code> if <code>has_value()</code> is <code>true</code>, <code>error()</code> otherwise.
+</p>
+
+<p>
+2 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) i&amp;&amp;;</code>
+</p>
+
+<p>
+<i>Mandates:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code> and <code>is_convertible&lt;G, E&gt;</code> is <code>true</code>.
+</p>
+
+<p>
+<i>Returns:</i> <code>std::forward&lt;G&gt;(e)</code> if <code>has_value()</code> is <code>true</code>, <code>std::move(error())</code> otherwise.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdb3c993" class="outline-3">
+<h3 id="orgdb3c993">Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.observe] and [expected.object.eq]</h3>
+<div class="outline-text-3" id="text-orgdb3c993">
 <p>
 1 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -464,23 +503,16 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(value())&gt;&gt;
 </p>
 
 <p>
-<i>Constraints:</i> 
-</p>
-<ul class="org-ul">
-<li><code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>,</li>
-<li><code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code>, and</li>
-<li><p>
-<code>is_copy_constructible_v&lt;U&gt;</code> is <code>true</code>. 
+<i>Constraints:</i> <code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code>
 </p>
 
 <p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> U is a specialization of <code>expected</code> and <code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>,
 </p>
 
 <p>
 <i>Effects:</i> Equivalent to:
-</p></li>
-</ul>
+</p>
 <div class="org-src-container">
 <pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
    <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value());
@@ -504,16 +536,11 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(value(
 </p>
 
 <p>
-<i>Constraints:</i>
+<i>Constraints:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code>
 </p>
-<ul class="org-ul">
-<li><code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>,</li>
-<li><code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code>, and</li>
-<li><code>is_move_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
-</ul>
 
 <p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> U is a specialization of <code>expected</code> and <code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>, 
 </p>
 
 <p>
@@ -541,16 +568,11 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 </p>
 
 <p>
-<i>Constraints:</i>
+<i>Constraints:</i>  <code>is_copy_constructible_v&lt;T&gt;</code> is <code>true</code>. 
 </p>
-<ul class="org-ul">
-<li><code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>,</li>
-<li><code>is_copy_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_copy_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
-</ul>
 
 <p>
-<i>Mandates:</i> G is a specialization of <code>expected</code>.
+<i>Mandates:</i> G is a specialization of <code>expected</code> and  <code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>, 
 </p>
 
 <p>
@@ -558,7 +580,7 @@ Effects: Equivalent to:
 </p>
 <div class="org-src-container">
 <pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) {
-    <span style="color: #a020f0;">return</span> G(value());
+    <span style="color: #a020f0;">return</span> G(in_place, value());
 } <span style="color: #a020f0;">else</span> {
     <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(), error());
 }
@@ -578,16 +600,11 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 </p>
 
 <p>
-<i>Constraints:</i>
+<i>Constraints:</i> <code>is_move_constructible_v&lt;T&gt;</code> is <code>true</code>
 </p>
-<ul class="org-ul">
-<li><code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>,</li>
-<li><code>is_move_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_move_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
-</ul>
 
 <p>
-<i>Mandates:</i> G is a specialization of <code>expected</code>.
+<i>Mandates:</i> G is a specialization of <code>expected</code> and <code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>.
 </p>
 
 <p>
@@ -595,10 +612,10 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 </p>
 <div class="org-src-container">
 <pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
+   <span style="color: #a020f0;">return</span> G(in_place, <span style="color: #008b8b;">std</span>::move(value()));
 }
 <span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">move</span>(<span style="color: #a0522d;">error</span>())));
+   <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
@@ -615,43 +632,24 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(value())&gt;&gt;
 </p>
 
 <p>
-<i>Mandates:</i> U is a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. The declaration <code>U u(invoke(std::forward&lt;F&gt;(f), value()));</code> is well-formed.
+<i>Mandates:</i> U is <code>void</code> or a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. If <code>is_void_v&lt;U&gt;</code> is <code>false</code>, the declaration <code>U u(invoke(std::forward&lt;F&gt;(f), value()));</code> is well-formed.
 </p>
 
 <p>
 <i>Constraints:</i>
 </p>
 <ul class="org-ul">
-<li><code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>,</li>
 <li><code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code>, and</li>
-<li><code>is_copy_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
 </ul>
 
 <p>
-<i>Effects:</i> Equivalent to:
- if <code>is_same&lt;U, void&gt;</code> is false
+<i>Effects:</i> 
 </p>
-<div class="org-src-container">
-<pre class="src src-c++"><span style="color: #a020f0;">if</span> (has_value()) {
-     <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U, E&gt;(in_place, ~invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value()))
-}
-<span style="color: #a020f0;">else</span> {
-     <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(unexpect, error());
- }
-</pre>
-</div>
-<p>
-otherwise
-</p>
-<div class="org-src-container">
-<pre class="src src-c++"><span style="color: #a020f0;">if</span> (has_value()) {
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;<span style="color: #228b22;">void</span>, E&gt;(in_place, invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value()))
-}
-<span style="color: #a020f0;">else</span> {
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;<span style="color: #228b22;">void</span>,E&gt;(unexpect, error());
-}
-</pre>
-</div>
+<ul class="org-ul">
+<li>If <code>has_value()</code> is <code>false</code>, returns <code>expected&lt;U,E&gt;(unexpect, error())</code>, otherwise</li>
+<li>if <code>is_void_v&lt;U&gt;</code> is <code>false</code>, returns an <code>expected&lt;U, E&gt;</code> object whose <code>has_val</code> member is <code>true</code> and <code>val</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f), value())</code>, otherwise</li>
+<li>evaluates <code>invoke(std::forward&lt;F&gt;(f), value())</code> and then returns <code>expected&lt;U,E&gt;()</code>.</li>
+</ul>
 
 
 <p>
@@ -667,55 +665,22 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(value(
 </p>
 
 <p>
-<i>Mandates:</i> U is a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. The declaration <code>U u(invoke(std::forward&lt;F&gt;(f), std::move(value())));</code> is well-formed.
+<i>Mandates:</i> U is <code>void</code> or a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. If <code>is_void_v&lt;U&gt;</code> is <code>false</code>, the declaration <code>U u(invoke(std::forward&lt;F&gt;(f), std::move(value())));</code> is well-formed.
 </p>
 
 <p>
-<i>Constraints:</i>
+<i>Constraints:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code>, and
+</p>
+
+<p>
+<i>Effects:</i> 
 </p>
 <ul class="org-ul">
-<li><code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>,</li>
-<li><code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code>, and</li>
-<li><code>is_move_constructible_v&lt;U&gt;</code> is <code>true</code>.</li>
+<li>If <code>has_value()</code> is <code>false</code>, returns <code>expected&lt;U,E&gt;(unexpect, std::move(error()))</code>, otherwise</li>
+<li>if <code>is_void_v&lt;U&gt;</code> is <code>false</code>, returns an <code>expected&lt;U, E&gt;</code> object whose <code>has_val</code> member is <code>true</code> and <code>val</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f), std::move(value()))</code>, otherwise</li>
+<li>evaluates <code>invoke(std::forward&lt;F&gt;(f), std::move(value()))</code> and then returns <code>expected&lt;U,E&gt;()</code>.</li>
 </ul>
 
-<p>
-<i>Effects:</i> Equivalent to:
- if <code>is_same&lt;U, void&gt;</code> is false
-</p>
-<div class="org-src-container">
-<pre class="src src-c++"><span style="color: #a020f0;">if</span> (has_value()) {
-     ~<span style="color: #228b22;">expected</span>&lt;U, E&gt;(in_place, ~invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), value()))~
-}
-<span style="color: #a020f0;">else</span> {
-     <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(unexpect, error());
- }
-</pre>
-</div>
-<p>
-otherwise
-</p>
-<pre class="example">
-if (has_value()) {
-   return expected&lt;void, E&gt;(in_place, invoke(std::forward&lt;F&gt;(f), std::move(value())))
-}
-else {
-   return expected&lt;void,E&gt;(unexpect, std::move(error()));
-}
-</pre>
-
-<p>
-<i>Effects:</i> Equivalent to:
-</p>
-<div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;U,E&gt;(invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), <span style="color: #008b8b;">std</span>::move(value())));
-}
-<span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> U(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
-}
-</pre>
-</div>
 <p>
 1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -729,25 +694,21 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 
 <p>
-<i>Constraints:</i>
+<i>Mandates:</i> G is a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. The declaration <code>G g(invoke(std::forward&lt;F&gt;(f), error()));</code> is well-formed.
 </p>
-<ul class="org-ul">
-<li><code>is_copy_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_copy_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
-</ul>
 
 <p>
-<i>Effects:</i> Equivalent to:
+<i>Constraints:</i> <code>is_copy_constructible_v&lt;T&gt;</code> is <code>true</code>
 </p>
-<div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T, G&gt;();
-}
-<span style="color: #a020f0;">else</span> {
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T,G&gt;(unexpect, invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)(<span style="color: #228b22;">error</span>())));
-}
-</pre>
-</div>
+
+<p>
+<i>Returns:</i> 
+</p>
+<ul class="org-ul">
+<li>If <code>has_value()</code> is <code>true</code>,  <code>expected&lt;T,G&gt;(in_place, value())</code>, otherwise</li>
+<li>an <code>expected&lt;T, G&gt;</code> object whose <code>has_val</code> member is <code>false</code> and <code>unex</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f), error())</code>, otherwise</li>
+</ul>
+
 <p>
 1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
@@ -761,37 +722,36 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error(
 </p>
 
 <p>
-<i>Constraints:</i>
+<i>Mandates:</i> G is a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. The declaration <code>G g(invoke(std::forward&lt;F&gt;(f), std::move(error())));</code> is well-formed.
+</p>
+
+<p>
+<i>Constraints:</i> <code>is_move_constructible_v&lt;T&gt;</code> is <code>true</code>, and
+</p>
+
+<p>
+<i>Returns:</i> 
 </p>
 <ul class="org-ul">
-<li><code>is_move_constructible_v&lt;T&gt;</code> is <code>true</code>, and</li>
-<li><code>is_move_constructible_v&lt;G&gt;</code> is <code>true</code>.</li>
+<li>If <code>has_value()</code> is <code>true</code>,  <code>expected&lt;T,G&gt;(in_place, std::move(value()))</code>, otherwise</li>
+<li>an <code>expected&lt;T, G&gt;</code> object whose <code>has_val</code> member is <code>false</code> and <code>unex</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f), std::move(error()))</code></li>
 </ul>
-
-<p>
-<i>Effects:</i> Equivalent to:
-</p>
-<div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T, G&gt;()
-}
-<span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;T,G&gt;(unexpect, invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">move</span>(<span style="color: #a0522d;">error</span>()))));
-}
-</pre>
-</div>
 </div>
 </div>
 
-<div id="outline-container-org75bac66" class="outline-3">
-<h3 id="org75bac66">Partial specialization of expected for void types [expected.void]</h3>
-<div class="outline-text-3" id="text-org75bac66">
+<div id="outline-container-org85d3693" class="outline-3">
+<h3 id="org85d3693">Partial specialization of expected for void types [expected.void]</h3>
+<div class="outline-text-3" id="text-org85d3693">
 <p>
-After �.�.8.6, observers &#x2013; add
+After error functions add the new functions:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-C++"><span style="color: #b22222;">// </span><span style="color: #b22222;">&#65533;.&#65533;.8.7, monadic</span>
+<pre class="src src-C++">constexpr <span style="color: #228b22;">E</span>&amp;&amp; <span style="color: #0000ff;">error</span>() &amp;&amp;;
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">G</span> = <span style="color: #228b22;">E</span>&gt; constexpr <span style="color: #228b22;">E</span> <span style="color: #0000ff;">error_or</span>(<span style="color: #228b22;">G</span>&amp;&amp;) <span style="color: #a020f0;">const</span>&amp;;
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">G</span> = <span style="color: #228b22;">E</span>&gt; constexpr <span style="color: #228b22;">E</span> <span style="color: #0000ff;">error_or</span>(<span style="color: #228b22;">G</span>&amp;&amp;) &amp;&amp;;
+
+<span style="color: #b22222;">// </span><span style="color: #b22222;">&#65533;.&#65533;.8.7, monadic</span>
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
 <span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span>&amp;;
@@ -812,17 +772,39 @@ After �.�.8.6, observers &#x2013; add
 </div>
 </div>
 </div>
-<div id="outline-container-org9e5ae64" class="outline-3">
-<h3 id="org9e5ae64">Partial specialization of expected for void [expected.void.observe]</h3>
-<div class="outline-text-3" id="text-org9e5ae64">
+
+<div id="outline-container-org1b0a41d" class="outline-3">
+<h3 id="org1b0a41d">Add following at the end [expected.void.observe] Observers:</h3>
+<div class="outline-text-3" id="text-org1b0a41d">
 <p>
-After section �.�.8.5 Observers [expected.void.observe]
+1 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) const&amp;;</code>
 </p>
 
 <p>
-Add section �.�.8.6 Monadic [expected.void.monadic]
+<i>Mandates:</i> <code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code> and <code>is_convertible&lt;G, E&gt;</code> is <code>true</code>.
 </p>
 
+<p>
+<i>Returns:</i> <code>std::forward&lt;G&gt;(e)</code> if <code>has_value()</code> is <code>true</code>, <code>error()</code> otherwise.
+</p>
+
+<p>
+2 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) i&amp;&amp;;</code>
+</p>
+
+<p>
+<i>Mandates:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code> and <code>is_convertible&lt;G, E&gt;</code> is <code>true</code>.
+</p>
+
+<p>
+<i>Returns:</i> <code>std::forward&lt;G&gt;(e)</code> if <code>has_value()</code> is <code>true</code>, <code>std::move(error())</code> otherwise.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org750ba2d" class="outline-3">
+<h3 id="org750ba2d">Add a new section [expected.void.monadic] Monadic operations [expected.void.observe] and [expected.void.eq]</h3>
+<div class="outline-text-3" id="text-org750ba2d">
 <p>
 1 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -832,23 +814,15 @@ Add section �.�.8.6 Monadic [expected.void.monadic]
 </p>
 
 <p>
-3 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;&amp;;</code>
+Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>.
 </p>
 
 <p>
-4 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) const&amp;&amp;;</code>
+<i>Constraints:</i> <code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code>.
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>. 
-</p>
-
-<p>
-<i>Constraints:</i> <code>is_same_v&lt;U::error_type, E&gt;</code> is true. E models <code>copy_constructible</code> for the first two overloads and <code>move_constructible</code> for the second two overloads.
-</p>
-
-<p>
-<i>Mandates:</i> U is a specialization of <code>expected</code>.
+<i>Mandates:</i> U is a specialization of <code>expected</code> and  <code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>.
 </p>
 
 <p>
@@ -856,40 +830,88 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>.
 </p>
 <div class="org-src-container">
 <pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)());
+   <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>));
 }
 <span style="color: #a020f0;">else</span> { 
+   <span style="color: #a020f0;">return</span> U(unexpect, error());
+}
+</pre>
+</div>
+
+<p>
+1 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;&amp;;</code>
+</p>
+
+<p>
+2 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) const&amp;&amp;;</code>
+</p>
+
+<p>
+Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>.
+</p>
+
+<p>
+<i>Constraints:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code>
+</p>
+
+<p>
+<i>Mandates:</i> U is a specialization of <code>expected</code> and <code>is_same_v&lt;U::error_type, E&gt;</code> is <code>true</code>.
+</p>
+
+<p>
+<i>Effects:</i> Equivalent to:
+</p>
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
+   <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>));
+}
+<span style="color: #a020f0;">else</span> {
    <span style="color: #a020f0;">return</span> U(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
-
 <p>
-1 <code>template &lt;class F&gt; constexpr expected or_else(F&amp;&amp; f) &amp;;</code>
+1 <code>template &lt;class F&gt; constexpr auto or_else(F&amp;&amp; f) &amp;;</code>
 </p>
 
 <p>
-2 <code>template &lt;class F&gt; constexpr expected or_else(F&amp;&amp; f) const&amp;;</code>
+2 <code>template &lt;class F&gt; constexpr auto or_else(F&amp;&amp; f) const&amp;;</code>
 </p>
 
 <p>
-3 <code>template &lt;class F&gt; constexpr expected or_else(F&amp;&amp; f) &amp;&amp;;</code>
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>.
 </p>
 
 <p>
-4 <code>template &lt;class F&gt; constexpr expected or_else(F&amp;&amp; f) const &amp;&amp;;</code>
+<i>Mandates:</i> G is a specialization of <code>expected</code> and <code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>.
 </p>
 
 <p>
-Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
+Effects: Equivalent to:
+</p>
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) {
+    <span style="color: #a020f0;">return</span> G();
+} <span style="color: #a020f0;">else</span> {
+    <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(), error());
+}
+</pre>
+</div>
+
+<p>
+1 <code>template &lt;class F&gt; constexpr auto or_else(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
 
 <p>
-<i>Constraints:</i>  E models <code>copy_constructible</code> for the first two overloads and <code>move_constructible</code> for the second two overloads.
+2 <code>template &lt;class F&gt; constexpr auto or_else(F&amp;&amp; f) const&amp;&amp;;</code>
 </p>
 
 <p>
-<i>Mandates:</i> G is a specialization of <code>expected</code>.
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>. 
+</p>
+
+<p>
+<i>Mandates:</i> G is a specialization of <code>expected</code> and <code>is_same_v&lt;G::value_type, T&gt;</code> is <code>true</code>.
 </p>
 
 <p>
@@ -897,15 +919,13 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 <div class="org-src-container">
 <pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-    <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
-} 
+   <span style="color: #a020f0;">return</span> G();
+}
 <span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(f)();
+   <span style="color: #a020f0;">return</span> invoke(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>), <span style="color: #008b8b;">std</span>::move(error()));
 }
 </pre>
 </div>
-
-
 <p>
 1 <code>template &lt;class F&gt; constexpr auto transform(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -915,33 +935,55 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </p>
 
 <p>
-3 <code>template &lt;class F&gt; constexpr auto transform(F&amp;&amp; f) &amp;&amp;;</code>
+Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>.
 </p>
 
 <p>
-4 <code>template &lt;class F&gt; constexpr auto transform(F&amp;&amp; f) const&amp;&amp;;</code>
+<i>Mandates:</i> U is <code>void</code> or a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. If <code>is_void_v&lt;U&gt;</code> is <code>false</code>, the declaration <code>U u(invoke(std::forward&lt;F&gt;(f)));</code> is well-formed.
 </p>
 
 <p>
-Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>. 
+<i>Constraints:</i> <code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code>
 </p>
 
 <p>
-<i>Constraints:</i> <code>is_same_v&lt;U::error_type, E&gt;</code> is true. E models <code>copy_constructible</code> for the first two overloads and <code>move_constructible</code> for the second two overloads.
+<i>Effects:</i> 
+</p>
+<ul class="org-ul">
+<li>If <code>has_value()</code> is <code>false</code>, returns <code>expected&lt;U,E&gt;(unexpect, error())</code>, otherwise</li>
+<li>if <code>is_void_v&lt;U&gt;</code> is <code>false</code>, returns an <code>expected&lt;U, E&gt;</code> object whose <code>has_val</code> member is <code>true</code> and <code>val</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f))</code>, otherwise</li>
+<li>evaluates <code>invoke(std::forward&lt;F&gt;(f))</code> and then returns <code>expected&lt;U,E&gt;()</code>.</li>
+</ul>
+
+
+<p>
+1 <code>template &lt;class F&gt; constexpr auto transform(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
 
 <p>
-<i>Effects:</i> Equivalent to:
+2 <code>template &lt;class F&gt; constexpr auto transform(F&amp;&amp; f) const&amp;&amp;;</code>
 </p>
-<div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) {
-   <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;<span style="color: #228b22;">void</span>,E&gt;(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)());
-}
-<span style="color: #a020f0;">else</span> {
-  <span style="color: #a020f0;">return</span> <span style="color: #228b22;">expected</span>&lt;<span style="color: #228b22;">void</span>,E&gt;(unexpect, <span style="color: #008b8b;">std</span>::move(error()));
-}
-</pre>
-</div>
+
+<p>
+Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>.
+</p>
+
+<p>
+<i>Mandates:</i> U is <code>void</code> or a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. If <code>is_void_v&lt;U&gt;</code> is <code>false</code>, the declaration <code>U u(invoke(std::forward&lt;F&gt;(f)));</code> is well-formed.
+</p>
+
+<p>
+<i>Constraints:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code>, and
+</p>
+
+<p>
+<i>Effects:</i> 
+</p>
+<ul class="org-ul">
+<li>If <code>has_value()</code> is <code>false</code>, returns <code>expected&lt;U,E&gt;(unexpect, std::move(error()))</code>, otherwise</li>
+<li>if <code>is_void_v&lt;U&gt;</code> is <code>false</code>, returns an <code>expected&lt;U, E&gt;</code> object whose <code>has_val</code> member is <code>true</code> and <code>val</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f))</code>, otherwise</li>
+<li>evaluates <code>invoke(std::forward&lt;F&gt;(f))</code> and then returns <code>expected&lt;U,E&gt;()</code>.</li>
+</ul>
 
 <p>
 1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;;</code>
@@ -952,44 +994,51 @@ Let U be <code>remove_cvref_t&lt;invoke_result_t&lt;F&gt;&gt;</code>.
 </p>
 
 <p>
-3 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
-</p>
-
-<p>
-4 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
-</p>
-
-<p>
 Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;</code>. 
 </p>
 
 <p>
-<i>Constraints:</i> E models <code>copy_constructible</code> for the first two overloads and <code>move_constructible</code> for the second two overloads.
+<i>Mandates:</i> G is a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. The declaration <code>G g(invoke(std::forward&lt;F&gt;(f), error()));</code> is well-formed.
 </p>
 
 <p>
-<i>Mandates:</i> G is a specialization of <code>expected</code>.
+<i>Returns:</i> 
+</p>
+<ul class="org-ul">
+<li>If <code>has_value()</code> is <code>true</code>,  <code>expected&lt;T,G&gt;()</code>, otherwise</li>
+<li>an <code>expected&lt;T, G&gt;</code> object whose <code>has_val</code> member is <code>false</code> and <code>unex</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f), error())</code>, otherwise</li>
+</ul>
+
+<p>
+1 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) &amp;&amp;;</code>
 </p>
 
 <p>
-<i>Effects:</i> Equivalent to:
+2 <code>template &lt;class F&gt; constexpr auto transform_error(F&amp;&amp; f) const&amp;&amp;;</code>
 </p>
-<div class="org-src-container">
-<pre class="src src-C++"><span style="color: #a020f0;">if</span> (has_value()) { 
-    <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(*<span style="color: #a020f0;">this</span>);
-} 
-<span style="color: #a020f0;">else</span> { 
-   <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::move(<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">forward</span>&lt;F&gt;(<span style="color: #a0522d;">f</span>)(<span style="color: #228b22;">error</span>()));
-}
-</pre>
-</div>
+
+<p>
+Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))&gt;&gt;</code>.
+</p>
+
+<p>
+<i>Mandates:</i> G is a non-array object type other than <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>. The declaration <code>G g(invoke(std::forward&lt;F&gt;(f), std::move(error())));</code> is well-formed.
+</p>
+
+<p>
+<i>Returns:</i> 
+</p>
+<ul class="org-ul">
+<li>If <code>has_value()</code> is <code>true</code>,  <code>expected&lt;T,G&gt;()</code>, otherwise</li>
+<li>an <code>expected&lt;T, G&gt;</code> object whose <code>has_val</code> member is <code>false</code> and <code>unex</code> member is direct-non-list-initialized with <code>invoke(std::forward&lt;F&gt;(f), std::move(error()))</code></li>
+</ul>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org8624083" class="outline-2">
-<h2 id="org8624083">Acknowledgements</h2>
-<div class="outline-text-2" id="text-org8624083">
+<div id="outline-container-orgcb92b32" class="outline-2">
+<h2 id="orgcb92b32">Acknowledgements</h2>
+<div class="outline-text-2" id="text-orgcb92b32">
 <ul class="org-ul">
 <li>Thanks to Jonathan Wakely for implementation and wording feedback.</li>
 <li>Thanks to Tomasz Kaminski for extensive wording feedback.</li>
@@ -1000,9 +1049,9 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </ul>
 </div>
 </div>
-<div id="outline-container-org927252a" class="outline-2">
-<h2 id="org927252a">Revision History</h2>
-<div class="outline-text-2" id="text-org927252a">
+<div id="outline-container-org8d2e16f" class="outline-2">
+<h2 id="org8d2e16f">Revision History</h2>
+<div class="outline-text-2" id="text-org8d2e16f">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -1198,14 +1247,27 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 <td class="org-left">design discussion of <code>error_or</code> functions</td>
 </tr>
 </tbody>
+<tbody>
+<tr>
+<td class="org-right">4</td>
+<td class="org-right">2022-06-07</td>
+<td class="org-left">Add an <code>error_or</code> function that mirrors <code>value_or</code> for basic case</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">Incorporate wording suggestions from Tomasz K.</td>
+</tr>
+</tbody>
 </table>
 </div>
 </div>
 
 
-<div id="outline-container-org283a512" class="outline-2">
-<h2 id="org283a512">References</h2>
-<div class="outline-text-2" id="text-org283a512">
+<div id="outline-container-org7f9f5b7" class="outline-2">
+<h2 id="org7f9f5b7">References</h2>
+<div class="outline-text-2" id="text-org7f9f5b7">
 <ol class="org-ol">
 <li>[P0798] Sy Brand "Monadic Functions for std::optional" <a href="https://wg21.link/P0798">https://wg21.link/P0798</a></li>
 <li>C++ draft [optional.nomadic] <a href="http://eel.is/c++draft/optional.monadic">http://eel.is/c++draft/optional.monadic</a></li>
@@ -1222,7 +1284,7 @@ Let G be <code>remove_cvref_t&lt;invoke_result_t&lt;F, decltype(error())&gt;&gt;
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Jeff Garland</p>
-<p class="date">Created: 2022-06-07 Tue 09:27</p>
+<p class="date">Created: 2022-06-16 Thu 15:10</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

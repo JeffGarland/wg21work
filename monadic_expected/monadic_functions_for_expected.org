@@ -38,9 +38,10 @@ The following 3 functions are added to ~std::optional~, but are currently not pa
   - ~or_else~      returns if it has a value, otherwise it calls a function with the error type
   - ~transform~    apply a function to change the value (and possibly the type)
 
-After feedback on the R0, this draft also proposes the addition of a fourth function for ~expected~ to facilitate additional cases:
+After feedback, this draft also proposes the addition of two additional functions for ~expected~ to facilitate additional cases:
 
   - ~transform_error~ apply a function to change the value, otherwise call a function with error type
+  - ~error_or~        a value to return when there is not an error
 
 For example, given the following:
 #+BEGIN_SRC C++
@@ -154,7 +155,7 @@ This question has been asked several times including in the LEWG 2022-05-03 meet
 
 It has been suggested that ~error_or~ functions be added to the proposal.  While the author is sympathetic to the suggestion, since consistency with ~optional~ for c++23 is the intent these are not proposed. These can be added later or if LEWG would prefer the author can investigate adding them in this cycle.
 
-At 2022-06-07 LEWG telecom poll was taken to add this function.
+At 2022-06-07 LEWG telecom poll was taken to add this function.  The wording is added in R4 of the paper.
 
 
 ** Free versus member functions

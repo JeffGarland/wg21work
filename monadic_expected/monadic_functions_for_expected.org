@@ -221,13 +221,13 @@ After ~value_or~ functions add the new functions:
     
    /Mandates:/ ~is_copy_constructible_v<E>~ is ~true~ and ~is_convertible<G, E>~ is ~true~.
   
-   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : error()~.
+   /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~error()~ otherwise.
 
  2 ~template <class G = E> constexpr E error_or(G&& e) i&&;~
     
    /Mandates:/ ~is_move_constructible_v<E>~ is ~true~ and ~is_convertible<G, E>~ is ~true~.
   
-   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : std::move(error())~.
+   /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~std::move(error())~ otherwise.
 
 ** Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.observe] and [expected.object.eq]   
 
@@ -337,8 +337,8 @@ After ~value_or~ functions add the new functions:
 
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~, otherwise
-      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~, otherwise
-      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
+      - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(value()))~, otherwise
+      - evaluates ~invoke(std::forward<F>(f), std::move(value()))~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
@@ -401,13 +401,13 @@ After error functions add the new functions:
     
    /Mandates:/ ~is_copy_constructible_v<E>~ is ~true~ and ~is_convertible<G, E>~ is ~true~.
   
-   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : error()~.
+   /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~error()~ otherwise.
 
  2 ~template <class G = E> constexpr E error_or(G&& e) i&&;~
     
    /Mandates:/ ~is_move_constructible_v<E>~ is ~true~ and ~is_convertible<G, E>~ is ~true~.
   
-   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : std::move(error())~.
+   /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~std::move(error())~ otherwise.
 
 ** Add a new section [expected.void.monadic] Monadic operations [expected.void.observe] and [expected.void.eq]   
 
@@ -513,7 +513,7 @@ After error functions add the new functions:
     /Effects:/ 
       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~, otherwise
       - if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~, otherwise
-      - evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
+      - evaluates ~invoke(std::forward<F>(f))~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 

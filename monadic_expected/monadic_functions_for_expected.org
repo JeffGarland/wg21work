@@ -192,6 +192,8 @@ After ~value_or~ functions add the new functions:
 
 #+BEGIN_SRC C++
   template<class U> constexpr T value_or(U&&) &&;
+  template<class G = E> constexpr E error_or(G&&) const&;
+  template<class G = E> constexpr E error_or(G&&) &&;
 
   // [expected.monadic], monadic operations
   template <class F> constexpr auto and_then(F&& f) &;
@@ -213,7 +215,22 @@ After ~value_or~ functions add the new functions:
   // [expected.object.swap], swap
 #+END_SRC
 
-** Add a new sub-clause Monadic operations for [expected.monadic] between [expected.observe] and [expected.equality]   
+** Add following at the end [expected.object.observe] Observers:
+
+ 1 ~template <class G = E> constexpr E error_r(G&& e) const&;~
+    
+   /Mandates:/ ~is_copy_constructible_v<E>~ is true and ~is_convertible<G, E>~ is true.
+  
+   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : error()~.
+
+ 2 ~template <class G = E> constexpr E error_r(G&& e) i&&;~
+    
+   /Mandates:/ ~is_move_constructible_v<E>~ is true and ~is_convertible<G, E>~ is true.
+  
+   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : std::move(error())~.
+
+
+** Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.observe] and [expected.object.eq]   
 
   1 ~template <class F> constexpr auto and_then(F&& f) &;~
 
@@ -353,9 +370,13 @@ After ~value_or~ functions add the new functions:
       - an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~
 
 ** Partial specialization of expected for void types [expected.void]
-After �.�.8.6, observers -- add
+After ~error~ functions add the new functions:
 
 #+BEGIN_SRC C++
+  constexpr E&& error() &&;
+  template<class G = E> constexpr E error_or(G&&) const&;
+  template<class G = E> constexpr E error_or(G&&) &&;
+
   // �.�.8.7, monadic
   template <class F> constexpr auto and_then(F&& f) &;
   template <class F> constexpr auto and_then(F&& f) &&;
@@ -374,10 +395,22 @@ After �.�.8.6, observers -- add
   template <class F> constexpr auto transform_error(F&& f) const&;
   template <class F> constexpr auto transform_error(F&& f) const&&;
 #+END_SRC
-** Partial specialization of expected for void [expected.void.observe]
-After section �.�.8.5 Observers [expected.void.observe]
+** Add following the end [expected.void.observe] Observers:
 
-Add section �.�.8.6 Monadic [expected.void.monadic]
+ 1 ~template <class G = E> constexpr E error_r(G&& e) const&;~
+    
+   /Mandates:/ is_copy_constructible_v<E> is true and is_convertible<G, E> is true.
+  
+   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : error()~.
+
+ 2 ~template <class G = E> constexpr E error_r(G&& e) i&&;~
+    
+   /Mandates:/ is_copy_constructible_v<E> is true and is_convertible<G, E> is true.
+  
+   /Returns:/ ~has_value() ? static_cast<E>(std::forward<G>(e)) : std::move(error())~.
+
+
+** Add a new section [expected.void.monadic] Monadic operations [expected.void.observe] and [expected.void.eq]   
 
   1 ~template <class F> constexpr auto and_then(F&& f) &;~
 

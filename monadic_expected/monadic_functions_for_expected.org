@@ -157,6 +157,19 @@ It has been suggested that ~error_or~ functions be added to the proposal.  While
 
 At 2022-06-07 LEWG telecom poll was taken to add this function.  The wording is added in R4 of the paper.
 
+POLL: Add ~error_or~ to ~expected~ for C++23.
+
+| Strongly Favor | Weakly Favor | Neutral | Weakly Against | Strongly Against |
+|----------------+--------------+---------+----------------+------------------|
+|              4 |            7 |       2 |              2 |                0 |
+
+Attendance: 21
+# of Authors: 1
+
+Author Position: N
+
+Outcome: Consensus in favor.
+
 
 ** Free versus member functions
 One design question that has been raised is the use of member functions instead of free functions. The author is sympathetic to this view, but believes this can only be done by changing both ~optional~ and ~expected~.  The expressed benefits of free functions would be:

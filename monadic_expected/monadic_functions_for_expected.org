@@ -169,6 +169,30 @@ Author Position: N
 
 Outcome: Consensus in favor.
 
+As an example usage consider the following code:
+| Before |
+#+BEGIN_SRC C++
+//before
+file create_file(char const*, std::error_code&);
+bool test_and_report(const error_code&);
+
+std::error_code ec;
+file f = create_file("file", ec);
+if (test_and_report(ec)) { return; }
+
+#+END_SRC
+
+|After|
+#+BEGIN_SRC C++
+expected<file, error_code> create_file(char const*);
+bool test_and_report(const error_code&);
+
+auto f = create_file("file");
+
+if (test_and_report(f.error_or({}))) { return; }
+
+#+END_SRC
+
 
 ** Free versus member functions
 One design question that has been raised is the use of member functions instead of free functions. The author is sympathetic to this view, but believes this can only be done by changing both ~optional~ and ~expected~.  The expressed benefits of free functions would be:
@@ -193,6 +217,8 @@ https://doc.rust-lang.org/std/result/enum.Result.html
 Jonathan Wakely has implemented the full proposal here https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected.
 
 The core of the proposal was originally implemented by Sy Brand https://github.com/TartanLlama/expected with [[https://tl.tartanllama.xyz/en/latest/api/expected.html#tl-expected][documentation here]]. 
+
+Rishabh Dwivedi has also implemented the proposal based on the draft wording https://github.com/RishabhRD/expected.
 
 * Wording
 ** Feature Test Macro  
@@ -554,7 +580,7 @@ After error functions add the new functions:
 
 * Acknowledgements
  - Thanks to Jonathan Wakely for implementation and wording feedback.
- - Thanks to Tomasz Kaminski for extensive wording feedback.
+ - Thanks to Tomasz Kaminski for extensive wording input and suggestions on ~error_or~.
  - Thanks to Sy Brand for the original work on optional and expected.
  - Thanks to Broneck Kozicki for early feedback.
  - Thanks to Arthur O'Dwyer for design and wording feedback.
@@ -596,8 +622,10 @@ After error functions add the new functions:
 |         |            | design discussion and wording for ~transform~ to ~expected<void, E>~               |
 |         |            | design discussion of ~error_or~ functions                                          |
 |---------+------------+------------------------------------------------------------------------------------|
-|       4 | 2022-06-07 | Add an ~error_or~ function that mirrors ~value_or~ for basic case                  |
+|       4 | 2022-06-15 | Add an ~error_or~ function that mirrors ~value_or~ for basic case                  |
+|         |            | Update design section and intro with ~error_or~ information                        |
 |         |            | Incorporate wording suggestions from Tomasz K.                                     |
+|         |            | Add link to Rishabh D. implementation                                              |
 |---------+------------+------------------------------------------------------------------------------------|
 
 

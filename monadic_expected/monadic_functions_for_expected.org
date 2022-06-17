@@ -1,5 +1,5 @@
 #+AUTHOR: Jeff Garland
-#+TITLE: D2505R4 Monadic Functions for ~std::expected~
+#+TITLE: P2505R4 Monadic Functions for ~std::expected~
 #+EMAIL: jeff@crystalclearsoftware.com
 #+REVISION: 1
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
@@ -164,7 +164,6 @@ POLL: Add ~error_or~ to ~expected~ for C++23.
 |              4 |            7 |       2 |              2 |                0 |
 
 Attendance: 21
-# of Authors: 1
 
 Author Position: N
 

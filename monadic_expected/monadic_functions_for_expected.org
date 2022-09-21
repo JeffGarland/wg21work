@@ -260,9 +260,9 @@ Replace paragragh 2 sentence 1 as follows:
 
 with 
 
-A valid value type for ~expected~ is anything except a reference type, a function type, cv-qualified types ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~.  A program which instantiates the definition of the template ~expected<T, E>~ with a type T parameter that is not a valid value type for expected is ill-formed.
+A type T is a /valid value type for =expected=/, if ~remove_cv_t<T>~ is ~void~ or a complete object type that is not ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~.  A program which instantiates class template ~expected<T, E>~ with an argument T that is not a valid value type for ~expected~ is ill-formed.
 
-** Add following at the end [expected.object.observe] Observers:
+** Add following at the end [expected.object.obs] observers:
 
  1 ~template <class G = E> constexpr E error_or(G&& e) const &;~
     
@@ -276,7 +276,7 @@ A valid value type for ~expected~ is anything except a reference type, a functio
   
    /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~std::move(error())~ otherwise.
 
-** Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.observe] and [expected.object.eq]   
+** Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.obs] and [expected.object.eq]
 
   1 ~template <class F> constexpr auto and_then(F&& f) &;~
 
@@ -290,12 +290,10 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-      if (has_value()) { 
+      if (has_value())
          return invoke(std::forward<F>(f), value());
-      }
-      else { 
+      else
          return U(unexpect, error());
-      }
 #+END_SRC
 
   1 ~template <class F> constexpr auto and_then(F&& f) &&;~
@@ -310,12 +308,10 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (has_value()) { 
+       if (has_value())
           return invoke(std::forward<F>(f), std::move(value()));
-       }
-       else {
+       else
           return U(unexpect, std::move(error()));
-       }
 #+END_SRC
    1 ~template <class F> constexpr auto or_else(F&& f) &;~
 
@@ -327,13 +323,12 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     /Mandates:/ G is a specialization of ~expected~ and ~is_same_v<G::value_type, T>~ is ~true~.
 
-    Effects: Equivalent to:
+    /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-        if (has_value()) {
+        if (has_value())
             return G(in_place, value());
-        } else {
+        else
             return invoke(std::forward<F>(), error());
-        }
 #+END_SRC
 
     1 ~template <class F> constexpr auto or_else(F&& f) &&;~
@@ -348,12 +343,11 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (has_value()) { 
+       if (has_value())
           return G(in_place, std::move(value()));
-       }
-       else { 
+       else
           return invoke(std::forward<F>(f), std::move(error()));
-       }
+
 #+END_SRC
    1 ~template <class F> constexpr auto transform(F&& f) &;~
 
@@ -361,12 +355,14 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     Let U be ~remove_cv_t<invoke_result_t<F, decltype(value())>>~.
 
-    /Mandates:/ U is ~void~ or a non-array object type valid for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), value()));~ is well-formed.
+    /Mandates:/ U is a valid value type for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), value()));~ is well-formed.
 
     /Constraints:/ ~is_copy_constructible_v<E>~ is ~true~.
 
-    /Effects:/ If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~; otherwise if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~; otherwise evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
-
+    /Effects:/
+      - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~.
+      - Otherwise, if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), value())~.
+      - Otherwise, evaluates ~invoke(std::forward<F>(f), value())~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform(F&& f) &&;~
 
@@ -374,11 +370,14 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     Let U be ~remove_cv_t<invoke_result_t<F, decltype(std::move(value()))>>~.
 
-    /Mandates:/ U is ~void~ or a non-array object type valid for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), std::move(value())));~ is well-formed.
+    /Mandates:/ U is a valid value type for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f), std::move(value())));~ is well-formed.
 
     /Constraints:/ ~is_move_constructible_v<E>~ is ~true~.
 
-    /Effects:/ If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~; otherwise if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(value()))~; otherwise evaluates ~invoke(std::forward<F>(f), std::move(value()))~ and then returns ~expected<U,E>()~.
+    /Effects:/
+      - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~. 
+      - Otherwise, if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(value()))~.
+      - Otherwise, evaluates ~invoke(std::forward<F>(f), std::move(value()))~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
@@ -386,7 +385,7 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     Let G be ~remove_cv_t<invoke_result_t<F, decltype(error())>>~.
     
-    /Mandates:/ G is a non-array object type valid for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), error()));~ is well-formed.
+    /Mandates:/ G is a valid value type for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), error()));~ is well-formed.
 
     /Constraints:/ ~is_copy_constructible_v<T>~ is ~true~.
 
@@ -396,13 +395,13 @@ A valid value type for ~expected~ is anything except a reference type, a functio
 
     2 ~template <class F> constexpr auto transform_error(F&& f) const &&;~
 
-    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
+    Let G be ~remove_cv_t<invoke_result_t<F, decltype(std::move(error()))>>~.
     
-   /Mandates:/ G is a non-array object type valid for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), std::move(error())));~ is well-formed.
+   /Mandates:/ G is a valid value type for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), std::move(error())));~ is well-formed.
 
     /Constraints:/ ~is_move_constructible_v<T>~ is ~true~.
 
-    /Returns:/ If ~has_value()~ is ~true~,  ~expected<T,G>(in_place, std::move(value()))~; otherwise an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~.
+    /Returns:/ If ~has_value()~ is ~true~, ~expected<T,G>(in_place, std::move(value()))~; otherwise, an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~.
 
 ** Partial specialization of expected for void types [expected.void.general]
 
@@ -447,7 +446,7 @@ At the end of Observers section after ~error~ functions add:
   
    /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~std::move(error())~ otherwise.
 
-** Add a new section [expected.void.monadic] Monadic operations between [expected.void.observe] and [expected.void.eq]
+** Add a new section [expected.void.monadic] Monadic operations between [expected.void.obs] and [expected.void.eq]
 
   1 ~template <class F> constexpr auto and_then(F&& f) &;~
 
@@ -461,12 +460,10 @@ At the end of Observers section after ~error~ functions add:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-      if (has_value()) { 
+      if (has_value())
          return invoke(std::forward<F>(f));
-      }
-      else { 
+      else
          return U(unexpect, error());
-      }
 #+END_SRC
 
   1 ~template <class F> constexpr auto and_then(F&& f) &&;~
@@ -481,12 +478,10 @@ At the end of Observers section after ~error~ functions add:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (has_value()) { 
+       if (has_value())
           return invoke(std::forward<F>(f));
-       }
-       else {
+       else
           return U(unexpect, std::move(error()));
-       }
 #+END_SRC
    1 ~template <class F> constexpr auto or_else(F&& f) &;~
 
@@ -498,11 +493,10 @@ At the end of Observers section after ~error~ functions add:
 
     Effects: Equivalent to:
 #+BEGIN_SRC C++
-        if (has_value()) {
+        if (has_value())
             return G();
-        } else {
+        else
             return invoke(std::forward<F>(), error());
-        }
 #+END_SRC
 
     1 ~template <class F> constexpr auto or_else(F&& f) &&;~
@@ -515,12 +509,10 @@ At the end of Observers section after ~error~ functions add:
 
     /Effects:/ Equivalent to:
 #+BEGIN_SRC C++
-       if (has_value()) { 
+       if (has_value())
           return G();
-       }
-       else { 
+       else
           return invoke(std::forward<F>(f), std::move(error()));
-       }
 #+END_SRC
    1 ~template <class F> constexpr auto transform(F&& f) &;~
 
@@ -528,12 +520,14 @@ At the end of Observers section after ~error~ functions add:
 
     Let U be ~remove_cv_t<invoke_result_t<F>>~.
 
-    /Mandates:/ U is ~void~ or a non-array object type valid for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
+    /Mandates:/ U is a valid value type for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
     /Constraints:/ ~is_copy_constructible_v<E>~ is ~true~.
 
-    /Effects:/ If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~; otherwise if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~; otherwise evaluates ~invoke(std::forward<F>(f))~ and then returns ~expected<U,E>()~.
-
+    /Effects:/
+       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, error())~.
+       - Otherwise, if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~.
+       - Otherwise, evaluates ~invoke(std::forward<F>(f))~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform(F&& f) &&;~
 
@@ -541,19 +535,22 @@ At the end of Observers section after ~error~ functions add:
 
     Let U be ~remove_cv_t<invoke_result_t<F>>~.
 
-    /Mandates:/ U is ~void~ or a non-array object type valid for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
+    /Mandates:/ U is a valid value type for ~expected~. If ~is_void_v<U>~ is ~false~, the declaration ~U u(invoke(std::forward<F>(f)));~ is well-formed.
 
     /Constraints:/ ~is_move_constructible_v<E>~ is ~true~.
 
-    /Effects:/ If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~; otherwise if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~; otherwise evaluates ~invoke(std::forward<F>(f))~ and then returns ~expected<U,E>()~.
+    /Effects:/
+       - If ~has_value()~ is ~false~, returns ~expected<U,E>(unexpect, std::move(error()))~.
+       - Otherwise, if ~is_void_v<U>~ is ~false~, returns an ~expected<U, E>~ object whose ~has_val~ member is ~true~ and ~val~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f))~.
+       - Otherwise, evaluates ~invoke(std::forward<F>(f))~ and then returns ~expected<U,E>()~.
 
     1 ~template <class F> constexpr auto transform_error(F&& f) &;~
 
     2 ~template <class F> constexpr auto transform_error(F&& f) const &;~
 
-    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(error())>>~.
+    Let G be ~remove_cv_t<invoke_result_t<F, decltype(error())>>~.
     
-    /Mandates:/ G is a non-array object type valid for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), error()));~ is well-formed.
+    /Mandates:/ G is a valid value type for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), error()));~ is well-formed.
 
     /Returns:/ If ~has_value()~ is ~true~,  ~expected<T,G>()~; otherwise, an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), error())~.
 
@@ -561,9 +558,9 @@ At the end of Observers section after ~error~ functions add:
 
     2 ~template <class F> constexpr auto transform_error(F&& f) const &&;~
 
-    Let G be ~remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>~.
+    Let G be ~remove_cv_t<invoke_result_t<F, decltype(std::move(error()))>>~.
     
-    /Mandates:/ G is a non-array object type valid for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), std::move(error())));~ is well-formed.
+    /Mandates:/ G is a valid value type for ~expected~ and the declaration ~G g(invoke(std::forward<F>(f), std::move(error())));~ is well-formed.
 
     /Returns:/ If ~has_value()~ is ~true~,  ~expected<T,G>()~; otherwise an ~expected<T, G>~ object whose ~has_val~ member is ~false~ and ~unex~ member is direct-non-list-initialized with ~invoke(std::forward<F>(f), std::move(error()))~.
 
@@ -597,7 +594,7 @@ At the end of Observers section after ~error~ functions add:
 |         |            | fix ~transform_error~ and ~or_else~ constraints to be T instead of E               |
 |         |            | rename ~transform_or~ to ~transform_error~                                         |
 |         |            | remove the ~is_same_v~ constraint on ~transform_error~                             |
-|         |            | change ~tranform_error~ true case to return ~expected<T,U>~                        |
+|         |            | change ~transform_error~ true case to return ~expected<T,U>~                       |
 |         |            | remove note: U will implicitly model either copy or move constructible...          |
 |         |            | change all the ~if (*this)~ to ~if (has_value())~ to match latest expected wording |
 |         |            | remove the ~in_place~ tag in ~transform~ overloads                                 |
@@ -626,6 +623,8 @@ At the end of Observers section after ~error~ functions add:
 |         |            | remove comment about optional update of feature macro since gcc has shipped        |
 |         |            | add space to ~const&~ so it's ~const &~ everywhere                                 |
 |         |            | define valid expected type and use in specification of some overloads              |
+|         |            | for ~transform_error~ make ~remove_cvref_t~ be ~remove_cv_t~                       |
+|         |            | remove braces from effect equivalent to clauses                                    |
 |---------+------------+------------------------------------------------------------------------------------|
 
 

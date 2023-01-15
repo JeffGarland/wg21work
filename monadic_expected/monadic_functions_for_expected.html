@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2022-09-28 Wed 08:10 -->
+<!-- 2022-09-28 Wed 08:17 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D2505R5 Monadic Functions for <code>std::expected</code></title>
+<title>P2505R5 Monadic Functions for <code>std::expected</code></title>
 <meta name="generator" content="Org mode" />
 <meta name="author" content="Jeff Garland" />
 <link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
@@ -64,41 +64,41 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">D2505R5 Monadic Functions for <code>std::expected</code></h1>
+<h1 class="title">P2505R5 Monadic Functions for <code>std::expected</code></h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3ed3a91">Introduction</a></li>
-<li><a href="#org5c9cd48">Motivation and Scope</a></li>
-<li><a href="#orgd6210df">Design Considerations</a>
+<li><a href="#orgacdeae3">Introduction</a></li>
+<li><a href="#org85392cd">Motivation and Scope</a></li>
+<li><a href="#orgffe1c59">Design Considerations</a>
 <ul>
-<li><a href="#org926ba60"><code>expected&lt;void, E&gt;</code></a></li>
-<li><a href="#orgb4bbd56"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</a></li>
-<li><a href="#orge755e8c"><code>transform_error</code> function</a></li>
-<li><a href="#org3537c29">Changing of error return types</a></li>
-<li><a href="#orgd83fbc0">Use of deducing-this in the specification</a></li>
-<li><a href="#orgde7616a">Adding <code>error_or</code> functions</a></li>
-<li><a href="#orgdcd74e8">Free versus member functions</a></li>
+<li><a href="#orgef8b8ce"><code>expected&lt;void, E&gt;</code></a></li>
+<li><a href="#org9ad45e9"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</a></li>
+<li><a href="#org0ca7127"><code>transform_error</code> function</a></li>
+<li><a href="#org348eb14">Changing of error return types</a></li>
+<li><a href="#org0982b52">Use of deducing-this in the specification</a></li>
+<li><a href="#orge87985d">Adding <code>error_or</code> functions</a></li>
+<li><a href="#org9e312b1">Free versus member functions</a></li>
 </ul>
 </li>
-<li><a href="#org27b8ae1">Other Languages</a></li>
-<li><a href="#org0677b37">Implementations</a></li>
-<li><a href="#org649d9b9">Wording</a>
+<li><a href="#orgd7be73c">Other Languages</a></li>
+<li><a href="#orgbf1dbe5">Implementations</a></li>
+<li><a href="#orgcf4af65">Wording</a>
 <ul>
-<li><a href="#org230c016">Feature Test Macro</a></li>
-<li><a href="#org5453175">Class template expected [expected.expected]</a></li>
-<li><a href="#orgfb877a4">[expected.object.general] changes</a></li>
-<li><a href="#org11bd435">Add following at the end [expected.object.obs] observers:</a></li>
-<li><a href="#orgf80e0cc">Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.obs] and [expected.object.eq]</a></li>
-<li><a href="#org1c0367a">Partial specialization of expected for void types [expected.void.general]</a></li>
-<li><a href="#org827cc08">Partial specialization of expected for void types [expected.void.obs]</a></li>
-<li><a href="#org014d2d9">Add a new section [expected.void.monadic] Monadic operations between [expected.void.obs] and [expected.void.eq]</a></li>
+<li><a href="#orgb7e1302">Feature Test Macro</a></li>
+<li><a href="#orgd43c674">Class template expected [expected.expected]</a></li>
+<li><a href="#orgb3c1202">[expected.object.general] changes</a></li>
+<li><a href="#org5c348c9">Add following at the end [expected.object.obs] observers:</a></li>
+<li><a href="#org85689f2">Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.obs] and [expected.object.eq]</a></li>
+<li><a href="#org4df2222">Partial specialization of expected for void types [expected.void.general]</a></li>
+<li><a href="#orgfdd5335">Partial specialization of expected for void types [expected.void.obs]</a></li>
+<li><a href="#org19d39c5">Add a new section [expected.void.monadic] Monadic operations between [expected.void.obs] and [expected.void.eq]</a></li>
 </ul>
 </li>
-<li><a href="#org4c416c3">Acknowledgements</a></li>
-<li><a href="#org7d01c70">Revision History</a></li>
-<li><a href="#org398f928">References</a></li>
+<li><a href="#org9bf002a">Acknowledgements</a></li>
+<li><a href="#org8f44e45">Revision History</a></li>
+<li><a href="#orgcc4c5f1">References</a></li>
 </ul>
 </div>
 </div>
@@ -123,9 +123,9 @@ for the JavaScript code in this tag.
 </p>
 
 
-<div id="outline-container-org3ed3a91" class="outline-2">
-<h2 id="org3ed3a91">Introduction</h2>
-<div class="outline-text-2" id="text-org3ed3a91">
+<div id="outline-container-orgacdeae3" class="outline-2">
+<h2 id="orgacdeae3">Introduction</h2>
+<div class="outline-text-2" id="text-orgacdeae3">
 <p>
 With the final plenary vote of <a href="https://wg21.link/P0798">P0798 Monadic Functions for std::optional</a> complete, we now have an design inconsistency with <code>std::expected</code>. <a href="https://wg21.link/P0323">P0323 std::expected</a> has now also been voted into the working draft for C++23. This proposal corrects the inconsistency by adding 4 functions to <code>std::expected</code> and is targeted at C++23.  The author believes this should be treated as a consistency/bug fix still in scope for C++23.
 </p>
@@ -140,9 +140,9 @@ There is a proposal for std::expected which would benefit from many of these sam
 </blockquote>
 </div>
 </div>
-<div id="outline-container-org5c9cd48" class="outline-2">
-<h2 id="org5c9cd48">Motivation and Scope</h2>
-<div class="outline-text-2" id="text-org5c9cd48">
+<div id="outline-container-org85392cd" class="outline-2">
+<h2 id="org85392cd">Motivation and Scope</h2>
+<div class="outline-text-2" id="text-org85392cd">
 <p>
 The following 3 functions are added to <code>std::optional</code>, but are currently not part of <code>std::expected</code>.  
 </p>
@@ -259,13 +259,13 @@ For more examples see: <a href="https://godbolt.org/z/K7rbhx9oo">https://godbolt
 </div>
 </div>
 
-<div id="outline-container-orgd6210df" class="outline-2">
-<h2 id="orgd6210df">Design Considerations</h2>
-<div class="outline-text-2" id="text-orgd6210df">
+<div id="outline-container-orgffe1c59" class="outline-2">
+<h2 id="orgffe1c59">Design Considerations</h2>
+<div class="outline-text-2" id="text-orgffe1c59">
 </div>
-<div id="outline-container-org926ba60" class="outline-3">
-<h3 id="org926ba60"><code>expected&lt;void, E&gt;</code></h3>
-<div class="outline-text-3" id="text-org926ba60">
+<div id="outline-container-orgef8b8ce" class="outline-3">
+<h3 id="orgef8b8ce"><code>expected&lt;void, E&gt;</code></h3>
+<div class="outline-text-3" id="text-orgef8b8ce">
 <p>
 Compared with <code>optional</code>, <code>expected</code> provides the capability for <code>void</code> as a function return type. This complicates the design compared to <code>optional</code>.  As currently specified the <code>void</code> specialization of <code>expected</code>, <code>expected&lt;void, T&gt;</code> removes the <code>value_or</code> function since <code>void</code> cannot be initialized to anything else.
 </p>
@@ -276,9 +276,9 @@ While the primary implementation for this paper excludes <code>transform</code> 
 </div>
 </div>
 
-<div id="outline-container-orgb4bbd56" class="outline-3">
-<h3 id="orgb4bbd56"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</h3>
-<div class="outline-text-3" id="text-orgb4bbd56">
+<div id="outline-container-org9ad45e9" class="outline-3">
+<h3 id="org9ad45e9"><code>transform</code> to <code>expected&lt;void, E&gt;</code> return</h3>
+<div class="outline-text-3" id="text-org9ad45e9">
 <p>
 Consider the following code.
 </p>
@@ -295,18 +295,18 @@ The original specifications and implementations would fail to compile this code.
 </div>
 </div>
 
-<div id="outline-container-orge755e8c" class="outline-3">
-<h3 id="orge755e8c"><code>transform_error</code> function</h3>
-<div class="outline-text-3" id="text-orge755e8c">
+<div id="outline-container-org0ca7127" class="outline-3">
+<h3 id="org0ca7127"><code>transform_error</code> function</h3>
+<div class="outline-text-3" id="text-org0ca7127">
 <p>
 The R0 version of this paper did not include this function to match optional, but several reviewers noted the important utility of this case. Note that in the reference implementation of this paper, the function is called <code>map_error</code>.  The R1 version of the paper names the function <code>transform_error</code> after discussions with various reviewers.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3537c29" class="outline-3">
-<h3 id="org3537c29">Changing of error return types</h3>
-<div class="outline-text-3" id="text-org3537c29">
+<div id="outline-container-org348eb14" class="outline-3">
+<h3 id="org348eb14">Changing of error return types</h3>
+<div class="outline-text-3" id="text-org348eb14">
 <p>
 One complication of the monadic functions for <code>expected</code> as compared to <code>optional</code> is the ability to change the return error return type on subsequent function calls.  Optional, of course, can only return <code>std::nullopt_t</code>. 
 </p>
@@ -335,18 +335,18 @@ Note that the changing of the error type applies to the <code>or_else</code> and
 </div>
 </div>
 
-<div id="outline-container-orgd83fbc0" class="outline-3">
-<h3 id="orgd83fbc0">Use of deducing-this in the specification</h3>
-<div class="outline-text-3" id="text-orgd83fbc0">
+<div id="outline-container-org0982b52" class="outline-3">
+<h3 id="org0982b52">Use of deducing-this in the specification</h3>
+<div class="outline-text-3" id="text-org0982b52">
 <p>
 This question has been asked several times including in the LEWG 2022-05-03 meeting.  While less concise, the author prefers to keep the specification consistent with the rest of the c++23 library and especially <code>std::optional</code>.  Limited access to compilers that implement deducing-this make it difficult to confirm correct behavior of a deducing-this based specification.  In addition, the current specification does not preclude changing to a deducing-this based consistently with other library facilities in a future release.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgde7616a" class="outline-3">
-<h3 id="orgde7616a">Adding <code>error_or</code> functions</h3>
-<div class="outline-text-3" id="text-orgde7616a">
+<div id="outline-container-orge87985d" class="outline-3">
+<h3 id="orge87985d">Adding <code>error_or</code> functions</h3>
+<div class="outline-text-3" id="text-orge87985d">
 <p>
 It has been suggested that <code>error_or</code> functions be added to the proposal.  While the author is sympathetic to the suggestion, since consistency with <code>optional</code> for c++23 is the intent these are not proposed. These can be added later or if LEWG would prefer the author can investigate adding them in this cycle.
 </p>
@@ -458,9 +458,9 @@ As an example usage consider the following code:
 </div>
 
 
-<div id="outline-container-orgdcd74e8" class="outline-3">
-<h3 id="orgdcd74e8">Free versus member functions</h3>
-<div class="outline-text-3" id="text-orgdcd74e8">
+<div id="outline-container-org9e312b1" class="outline-3">
+<h3 id="org9e312b1">Free versus member functions</h3>
+<div class="outline-text-3" id="text-org9e312b1">
 <p>
 One design question that has been raised is the use of member functions instead of free functions. The author is sympathetic to this view, but believes this can only be done by changing both <code>optional</code> and <code>expected</code>.  The expressed benefits of free functions would be:
 </p>
@@ -485,9 +485,9 @@ Note that the author's experience with <code>std::expected</code> implementing j
 </div>
 </div>
 
-<div id="outline-container-org27b8ae1" class="outline-2">
-<h2 id="org27b8ae1">Other Languages</h2>
-<div class="outline-text-2" id="text-org27b8ae1">
+<div id="outline-container-orgd7be73c" class="outline-2">
+<h2 id="orgd7be73c">Other Languages</h2>
+<div class="outline-text-2" id="text-orgd7be73c">
 <p>
 Rust provides a result type with similar functions monadic functions.
 </p>
@@ -498,9 +498,9 @@ Rust provides a result type with similar functions monadic functions.
 </div>
 </div>
 
-<div id="outline-container-org0677b37" class="outline-2">
-<h2 id="org0677b37">Implementations</h2>
-<div class="outline-text-2" id="text-org0677b37">
+<div id="outline-container-orgbf1dbe5" class="outline-2">
+<h2 id="orgbf1dbe5">Implementations</h2>
+<div class="outline-text-2" id="text-orgbf1dbe5">
 <p>
 Jonathan Wakely has implemented the full proposal here <a href="https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected">https://github.com/jwakely/gcc/blob/expected/libstdc%2B%2B-v3/include/std/expected</a>.
 </p>
@@ -515,22 +515,22 @@ Rishabh Dwivedi has also implemented the proposal based on the draft wording <a 
 </div>
 </div>
 
-<div id="outline-container-org649d9b9" class="outline-2">
-<h2 id="org649d9b9">Wording</h2>
-<div class="outline-text-2" id="text-org649d9b9">
+<div id="outline-container-orgcf4af65" class="outline-2">
+<h2 id="orgcf4af65">Wording</h2>
+<div class="outline-text-2" id="text-orgcf4af65">
 </div>
-<div id="outline-container-org230c016" class="outline-3">
-<h3 id="org230c016">Feature Test Macro</h3>
-<div class="outline-text-3" id="text-org230c016">
+<div id="outline-container-orgb7e1302" class="outline-3">
+<h3 id="orgb7e1302">Feature Test Macro</h3>
+<div class="outline-text-3" id="text-orgb7e1302">
 <p>
 Update the <code>__cpp_lib_expected</code> feature test macro from P0323.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org5453175" class="outline-3">
-<h3 id="org5453175">Class template expected [expected.expected]</h3>
-<div class="outline-text-3" id="text-org5453175">
+<div id="outline-container-orgd43c674" class="outline-3">
+<h3 id="orgd43c674">Class template expected [expected.expected]</h3>
+<div class="outline-text-3" id="text-orgd43c674">
 <p>
 After <code>value_or</code> functions in synopsis at [expected.object.obs] add the following:
 </p>
@@ -562,9 +562,9 @@ After <code>value_or</code> functions in synopsis at [expected.object.obs] add t
 </div>
 </div>
 
-<div id="outline-container-orgfb877a4" class="outline-3">
-<h3 id="orgfb877a4">[expected.object.general] changes</h3>
-<div class="outline-text-3" id="text-orgfb877a4">
+<div id="outline-container-orgb3c1202" class="outline-3">
+<h3 id="orgb3c1202">[expected.object.general] changes</h3>
+<div class="outline-text-3" id="text-orgb3c1202">
 <p>
 Replace paragragh 2 sentence 1 as follows:
 <del>A program that instantiates the definition of template expected&lt;T, E&gt; for a reference type, a function type, or for possibly cv-qualified types in<sub>place</sub><sub>t</sub>, unexpect<sub>t</sub>, or a specialization of unexpected for the T parameter is ill-formed.</del>
@@ -580,9 +580,9 @@ A type T is a <i>valid value type for <code>expected</code></i>, if <code>remove
 </div>
 </div>
 
-<div id="outline-container-org11bd435" class="outline-3">
-<h3 id="org11bd435">Add following at the end [expected.object.obs] observers:</h3>
-<div class="outline-text-3" id="text-org11bd435">
+<div id="outline-container-org5c348c9" class="outline-3">
+<h3 id="org5c348c9">Add following at the end [expected.object.obs] observers:</h3>
+<div class="outline-text-3" id="text-org5c348c9">
 <p>
 1 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) const &amp;;</code>
 </p>
@@ -609,9 +609,9 @@ A type T is a <i>valid value type for <code>expected</code></i>, if <code>remove
 </div>
 </div>
 
-<div id="outline-container-orgf80e0cc" class="outline-3">
-<h3 id="orgf80e0cc">Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.obs] and [expected.object.eq]</h3>
-<div class="outline-text-3" id="text-orgf80e0cc">
+<div id="outline-container-org85689f2" class="outline-3">
+<h3 id="org85689f2">Add a new sub-clause [expected.object.monadic] Monadic operations between [expected.object.obs] and [expected.object.eq]</h3>
+<div class="outline-text-3" id="text-org85689f2">
 <p>
 1 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -843,9 +843,9 @@ Let G be <code>remove_cv_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))
 </div>
 </div>
 
-<div id="outline-container-org1c0367a" class="outline-3">
-<h3 id="org1c0367a">Partial specialization of expected for void types [expected.void.general]</h3>
-<div class="outline-text-3" id="text-org1c0367a">
+<div id="outline-container-org4df2222" class="outline-3">
+<h3 id="org4df2222">Partial specialization of expected for void types [expected.void.general]</h3>
+<div class="outline-text-3" id="text-org4df2222">
 <p>
 After <code>error</code> functions [expected.void.obs] section add:
 </p>
@@ -876,9 +876,9 @@ After <code>error</code> functions [expected.void.obs] section add:
 </div>
 </div>
 
-<div id="outline-container-org827cc08" class="outline-3">
-<h3 id="org827cc08">Partial specialization of expected for void types [expected.void.obs]</h3>
-<div class="outline-text-3" id="text-org827cc08">
+<div id="outline-container-orgfdd5335" class="outline-3">
+<h3 id="orgfdd5335">Partial specialization of expected for void types [expected.void.obs]</h3>
+<div class="outline-text-3" id="text-orgfdd5335">
 <p>
 At the end of Observers section after <code>error</code> functions add:
 </p>
@@ -909,9 +909,9 @@ At the end of Observers section after <code>error</code> functions add:
 </div>
 </div>
 
-<div id="outline-container-org014d2d9" class="outline-3">
-<h3 id="org014d2d9">Add a new section [expected.void.monadic] Monadic operations between [expected.void.obs] and [expected.void.eq]</h3>
-<div class="outline-text-3" id="text-org014d2d9">
+<div id="outline-container-org19d39c5" class="outline-3">
+<h3 id="org19d39c5">Add a new section [expected.void.monadic] Monadic operations between [expected.void.obs] and [expected.void.eq]</h3>
+<div class="outline-text-3" id="text-org19d39c5">
 <p>
 1 <code>template &lt;class F&gt; constexpr auto and_then(F&amp;&amp; f) &amp;;</code>
 </p>
@@ -1127,9 +1127,9 @@ Let G be <code>remove_cv_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))
 </div>
 </div>
 
-<div id="outline-container-org4c416c3" class="outline-2">
-<h2 id="org4c416c3">Acknowledgements</h2>
-<div class="outline-text-2" id="text-org4c416c3">
+<div id="outline-container-org9bf002a" class="outline-2">
+<h2 id="org9bf002a">Acknowledgements</h2>
+<div class="outline-text-2" id="text-org9bf002a">
 <ul class="org-ul">
 <li>Thanks to Jonathan Wakely for implementation and wording feedback.</li>
 <li>Thanks to Tomasz Kaminski for extensive wording input and suggestions on <code>error_or</code>.</li>
@@ -1140,9 +1140,9 @@ Let G be <code>remove_cv_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))
 </ul>
 </div>
 </div>
-<div id="outline-container-org7d01c70" class="outline-2">
-<h2 id="org7d01c70">Revision History</h2>
-<div class="outline-text-2" id="text-org7d01c70">
+<div id="outline-container-org8f44e45" class="outline-2">
+<h2 id="org8f44e45">Revision History</h2>
+<div class="outline-text-2" id="text-org8f44e45">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -1441,9 +1441,9 @@ Let G be <code>remove_cv_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))
 </div>
 
 
-<div id="outline-container-org398f928" class="outline-2">
-<h2 id="org398f928">References</h2>
-<div class="outline-text-2" id="text-org398f928">
+<div id="outline-container-orgcc4c5f1" class="outline-2">
+<h2 id="orgcc4c5f1">References</h2>
+<div class="outline-text-2" id="text-orgcc4c5f1">
 <ol class="org-ol">
 <li>[P0798] Sy Brand "Monadic Functions for std::optional" <a href="https://wg21.link/P0798">https://wg21.link/P0798</a></li>
 <li>C++ draft [optional.nomadic] <a href="http://eel.is/c++draft/optional.monadic">http://eel.is/c++draft/optional.monadic</a></li>
@@ -1461,7 +1461,7 @@ Let G be <code>remove_cv_t&lt;invoke_result_t&lt;F, decltype(std::move(error()))
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Jeff Garland</p>
-<p class="date">Created: 2022-09-28 Wed 08:10</p>
+<p class="date">Created: 2022-09-28 Wed 08:17</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

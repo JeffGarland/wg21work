@@ -1,0 +1,478 @@
+#+AUTHOR: Jeff Garland
+#+TITLE: D2768R0  ~std::environment~
+#+EMAIL: jeff@crystalclearsoftware.com
+#+REVISION: 1
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+options: num:nil
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [11pt]
+#+LaTeX_HEADER: \usepackage[letterpaper,margin=.75in,top=.75in,bottom=.75in]{geometry}
+#+LaTeX_HEADER: \usepackage[frame=lines, linenos=true]{minted}
+#+LaTeX_HEADER: \usepackage{pdfpages}
+
+*Authors:*
+    Jeff Garland
+
+*Audience:*
+    SG16, LEWG
+
+*Project:*
+    ISO/IEC JTC1/SC22/WG21 14882: Programming Language — C++
+
+*Contact:*
+    jeff@crystalclearsoftware.com
+
+
+* Introduction
+Interaction with the operating system environment settings is needed in many C++ applications. Currently the only portable function available is [[https://en.cppreference.com/w/cpp/utility/program/getenv][~std::getenv~]] which provides a C style api.  This is insufficient to support many modern C++ programs.  It is also an unsafe API.
+
+This paper draws inspiration and requirements from earlier work by [[https://wg21.link/p1275][Isabella Muerte (P1275)]] and [[https://wg21.link/P1750][P1750 A Proposal to Add Process Management to the C++ Standard Library]]. However, it does not propose ~std::args~ as in P1275. It does support facilities needed by std::process~ including functions to write to the environment.
+
+#+begin_quote
+#+end_quote
+* Motivation and Scope
+
+Currently the only C++ supported api is inherited from C as shown below.
+#+BEGIN_SRC C++
+#include <cstdlib>
+ 
+int main()
+{
+    if( const char* path = std::getenv("PATH") )
+        std::println("PATH: {}", path);
+}
+#+END_SRC
+
+This function returns a pointer that points at static data which may be reallocated by the platform if the environment is written by posix function such as ~setenv~.  In addition, the pointer is subject to data races in multi-threaded programs.  In addition, it is insufficient to discover the list of environment settings for the program. 
+
+
+
+
+
+This paper advocates for a library addition, ~std::environment~ that provides portable application development.
+
+
+Before the change we'd write this:
+
+| Before |
+#+BEGIN_SRC C++
+  time_expected d = from_iso_str( ts );
+  if (d)
+  {
+     ptime t = next_day( *d );
+  } 
+  else
+  {
+     print_error( d.error() );
+  }
+#+END_SRC
+
+And after, this:
+
+| After |
+
+#+BEGIN_SRC C++
+   // chain a series of functions until there's an error
+   auto d = from_iso_str ( ts )
+                  .or_else( print_error )
+                  .transform( next_day ) ;
+#+END_SRC
+
+* Design Considerations
+
+The following sections discuss various aspects of the design the committee should consider and decide.
+
+** API Scope -- No Command Line Arguments?
+Several languages bundle environment access and command line arguments as related entities.  The original [P1275 https://wg21.link/p1275]  
+
+  1. [P1275] Isabella Muerte 
+
+Common themes 
+
+- optional like access
+- existence check
+- range based access
+
+
+** Thread and Memory Safety
+The environment of a running process on common platforms is global data.  Making modifications to this data from multiple threads and reading from others can cause data races.  C++ is not in a position to change the reality of these platforms so at a minimum it needs to be documented.
+
+Even worse, keeping a reference to the data is not safe either as the underlying platform may relocate 
+
+TODO: an example
+
+
+As an example, POSIX platforms document that ~getenv~ is 
+
+#+BEGIN_NOTES
+
+Rust discussion on thread safety https://austingroupbugs.net/view.php?id=188
+GLIBC discussion https://sourceware.org/bugzilla/show_bug.cgi?id=15607#c2
+https://github.com/rust-lang/rust/pull/24741
+
+#+END_NOTES
+
+** Freestanding and Platform Support
+
+There are more than a few platforms that do not support the concept of the process environment.  There needs to be a way for those platforms to opt out of support.  As a result, this proposal does not mark the facilities as freestanding. 
+
+To quote Ben Craig on this point: "Philosophical reason: The environment is global state from the operating environment.  Freestanding attempts to avoid global state and interaction with the operating environment."
+
+TODO: question to Ben Craig
+
+** Unicode
+** API to Write Environment
+An API to set environment variables is important for many applications, but especially those that spawn child processes. Posix API's include ~putenv~, ~setenv~, and ~unsetenv~.  The ~putenv~ design is inherently unsafe and will not be considered further -- see [[https://stackoverflow.com/questions/5873029/questions-about-putenv-and-setenv][this stckoverflow discussion]] for details.
+
+
+
+
+
+** ~expected<void, E>~
+
+** Adding ~error_or~ functions
+
+It has been suggested that ~error_or~ functions be added to the proposal.  While the author is sympathetic to the suggestion, since consistency with ~optional~ for c++23 is the intent these are not proposed. These can be added later or if LEWG would prefer the author can investigate adding them in this cycle.
+
+At 2022-06-07 LEWG telecom poll was taken to add this function.  The wording is added in R4 of the paper.
+
+POLL: Add ~error_or~ to ~expected~ for C++23.
+
+| Strongly Favor | Weakly Favor | Neutral | Weakly Against | Strongly Against |
+|----------------+--------------+---------+----------------+------------------|
+|              4 |            7 |       2 |              2 |                0 |
+
+Attendance: 21
+
+Author Position: N
+
+Outcome: Consensus in favor.
+
+As an example usage consider the following code:
+| Before |
+#+BEGIN_SRC C++
+//before
+file create_file(char const*, std::error_code&);
+bool test_and_report(const error_code&);
+
+std::error_code ec;
+file f = create_file("file", ec);
+if (test_and_report(ec)) { return; }
+
+#+END_SRC
+
+|After|
+#+BEGIN_SRC C++
+expected<file, error_code> create_file(char const*);
+bool test_and_report(const error_code&);
+
+auto f = create_file("file");
+
+if (test_and_report(f.error_or({}))) { return; }
+
+#+END_SRC
+
+* Other Languages and Libraries
+
+** C
+https://en.cppreference.com/w/c/program/getenv
+
+
+** Boost Process - environment
+
+#+BEGIN_SRC C++
+
+https://www.boost.org/doc/libs/1_81_0/doc/html/process/reference.html#header.boost.process.environment_hpp
+
+namespace boost {
+  namespace process {
+    template<typename Char> class basic_environment;
+    template<typename Char> class basic_native_environment;
+
+    typedef basic_native_environment< char > native_environment;  // Definition of the environment for the current process. 
+    typedef basic_native_environment< wchar_t > wnative_environment;  // Definition of the environment for the current process. 
+    typedef basic_environment< char > environment;  // Type definition to hold a seperate environment. 
+    typedef basic_environment< wchar_t > wenvironment;  // Type definition to hold a seperate environment. 
+  }
+  namespace this_process {
+
+    // Get the process id of the current process. 
+    int get_id();
+
+    // Get the native handle of the current process. 
+    native_handle_type native_handle();
+
+    // Get the enviroment of the current process. 
+    native_environment environment();
+
+    // Get the enviroment of the current process. 
+    wnative_environment wenvironment();
+
+    // Get the path environment variable of the current process runs. 
+    std::vector< boost::process::filesystem::path > path();
+  }
+}
+#+END_SRC
+** Windows
+
+https://learn.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-getenvironmentstrings?redirectedfrom=MSDN
+
+If the function fails, the return value is NULL.
+
+#+begin_src c++
+LPCH GetEnvironmentStrings();
+
+#+end_src
+
+#+begin_notes
+
+The GetEnvironmentStrings function returns a pointer to a block of memory that contains the environment variables of the calling process (both the system and the user environment variables). Each environment block contains the environment variables in the following format:
+
+Each environment block contains the environment variables in the following format:
+
+Var1=Value1\0
+Var2=Value2\0
+Var3=Value3\0
+...
+VarN=ValueN\0\0
+
+The name of an environment variable cannot include an equal sign (=).
+
+Treat this memory as read-only; do not modify it directly. To add or change an environment variable, use the GetEnvironmentVariable and SetEnvironmentVariable functions.
+
+When the block returned by GetEnvironmentStrings is no longer needed, it should be freed by calling the FreeEnvironmentStrings function.
+
+Note that the ANSI version of this function, GetEnvironmentStringsA, returns OEM characters.
+#+end_notes
+
+** Python
+
+https://docs.python.org/3/library/os.html#os.getenv
+
+https://docs.python.org/3/library/os.html#os.environ
+
+#+begin_src python
+
+import os
+print(os.environ['HOME'])
+
+# print all
+print(os.environ) 
+
+# Returns `None` if the key doesn't exist
+print(os.environ.get('KEY_THAT_MIGHT_EXIST'))
+
+# Returns `default_value` if the key doesn't exist
+print(os.environ.get('KEY_THAT_MIGHT_EXIST', default_value))
+
+# Returns `default_value` if the key doesn't exist
+print(os.getenv('KEY_THAT_MIGHT_EXIST', default_value))
+
+#+end_src
+
+#+BEGIN_NOTES
+    A mapping object where keys and values are strings that represent the process environment. For example, environ['HOME'] is the pathname of your home directory (on some platforms), and is equivalent to getenv("HOME") in C.
+
+    This mapping is captured the first time the os module is imported, typically during Python startup as part of processing site.py. Changes to the environment made after this time are not reflected in os.environ, except for changes made by modifying os.environ directly.
+
+    This mapping may be used to modify the environment as well as query the environment. putenv() will be called automatically when the mapping is modified.
+
+    On Unix, keys and values use sys.getfilesystemencoding() and 'surrogateescape' error handler. Use environb if you would like to use a different encoding.
+
+    Note
+
+    Calling putenv() directly does not change os.environ, so it’s better to modify os.environ.
+
+    Note
+
+    On some platforms, including FreeBSD and macOS, setting environ may cause memory leaks. Refer to the system documentation for putenv().
+
+    You can delete items in this mapping to unset environment variables. unsetenv() will be called automatically when an item is deleted from os.environ, and when one of the pop() or clear() methods is called.
+
+    Changed in version 3.9: Updated to support PEP 584’s merge (|) and update (|=) operators.
+
+#+END_NOTES
+
+https://docs.python.org/3/library/os.html#os.putenv
+#+BEGIN_NOTES
+
+    Set the environment variable named key to the string value. Such changes to the environment affect subprocesses started with os.system(), popen() or fork() and execv().
+
+    Assignments to items in os.environ are automatically translated into corresponding calls to putenv(); however, calls to putenv() don’t update os.environ, so it is actually preferable to assign to items of os.environ. This also applies to getenv() and getenvb(), which respectively use os.environ and os.environb in their implementations.
+
+    Note
+
+    On some platforms, including FreeBSD and macOS, setting environ may cause memory leaks. Refer to the system documentation for putenv().
+
+    Raises an auditing event os.putenv with arguments key, value.
+
+    Changed in version 3.9: The function is now always available.
+
+
+#+END_NOTES
+
+https://docs.python.org/3/library/os.html#os.unsetenv
+#+BEGIN_NOTES
+    Unset (delete) the environment variable named key. Such changes to the environment affect subprocesses started with os.system(), popen() or fork() and execv().
+
+    Deletion of items in os.environ is automatically translated into a corresponding call to unsetenv(); however, calls to unsetenv() don’t update os.environ, so it is actually preferable to delete items of os.environ.
+
+    Raises an auditing event os.unsetenv with argument key.
+
+    Changed in version 3.9: The function is now always available and is also available on Windows.
+
+#+END_NOTES
+
+** GO
+
+#+begin_src go
+
+some_var := os.Getenv("SOME_VAR")
+
+os.Setenv("NAME", "gopher")
+os.Setenv("BURROW", "/usr/gopher")
+fmt.Println(os.ExpandEnv("$NAME lives in ${BURROW}."))
+
+val, ok := os.LookupEnv(key)
+if !ok {
+  fmt.Printf("%s not set\n", key)
+}
+
+// func LookupEnv(key string) (string, bool)
+// func Setenv(key, value string) error
+// func Unsetenv(key string) error
+// func Environ() []string
+
+for _, vars := range os.Environ() {
+        envPair := strings.SplitN(variables, "=", 2)
+        fmt.Println(envPair[0]) 
+}
+
+#+end_src
+
+https://pkg.go.dev/os#Clearenv
+https://pkg.go.dev/os#Environ
+https://pkg.go.dev/os#ExpandEnv
+https://pkg.go.dev/os#LookupEnv
+https://pkg.go.dev/os#Setenv
+** Rust
+Rust provides an ~std::env~ object 
+
+https://doc.rust-lang.org/std/env/index.html
+
+
+And low level functions 
+
+remove_var
+
+https://doc.rust-lang.org/std/env/fn.remove_var.html
+
+
+
+** poco (c++)
+
+#+begin_src c++
+
+// Throws a NotFoundException if the variable does not exist.
+static std::string get(const std::string & name, const std::string & defaultValue);
+static void set(const std::string & name, const std::string & value);
+static bool has(const std::string & name);
+
+#+end_src
+
+https://docs.pocoproject.org/current/Poco.Environment.html#13404
+
+
+** libenvpp (c++)
+
+Prefix based enivironment access
+
+https://github.com/ph3at/libenvpp
+
+
+
+
+** QT Libraries
+
+https://doc.qt.io/qt-5/qtglobal.html#qgetenv
+https://doc.qt.io/qt-5/qtglobal.html#qputenv
+https://doc.qt.io/qt-5/qbytearray.html
+
+https://doc.qt.io/qt-5/qtglobal.html#qEnvironmentVariableIsSet
+https://doc.qt.io/qt-5/qtglobal.html#qEnvironmentVariableIsEmpty
+
+* Implementations
+
+* Wording
+** Feature Test Macro  
+
+Set the ~__cpp_lib_environment~ feature test macro.
+
+** Class template environment [.environment]
+
+After ~value_or~ functions in synopsis at [expected.object.obs] add the following:
+
+#+BEGIN_SRC C++
+  template<class G = E> constexpr E error_or(G&&) const &;
+  template<class G = E> constexpr E error_or(G&&) &&;
+
+  // [expected.object.monadic], monadic operations
+  template <class F> constexpr auto and_then(F&& f) &;
+  template <class F> constexpr auto and_then(F&& f) &&;
+  template <class F> constexpr auto and_then(F&& f) const &;
+  template <class F> constexpr auto and_then(F&& f) const &&;
+  template <class F> constexpr auto or_else(F&& f) &;
+  template <class F> constexpr auto or_else(F&& f) &&;
+  template <class F> constexpr auto or_else(F&& f) const &;
+  template <class F> constexpr auto or_else(F&& f) const &&;
+  template <class F> constexpr auto transform(F&& f) &;
+  template <class F> constexpr auto transform(F&& f) &&;
+  template <class F> constexpr auto transform(F&& f) const &;
+  template <class F> constexpr auto transform(F&& f) const &&;
+  template <class F> constexpr auto transform_error(F&& f) &;
+  template <class F> constexpr auto transform_error(F&& f) &&;
+  template <class F> constexpr auto transform_error(F&& f) const &;
+  template <class F> constexpr auto transform_error(F&& f) const &&;
+
+#+END_SRC
+
+** [expected.object.general] changes
+
+Replace paragragh 2 sentence 1 as follows:
++A program that instantiates the definition of template expected<T, E> for a reference type, a function type, or for possibly cv-qualified types in_place_t, unexpect_t, or a specialization of unexpected for the T parameter is ill-formed.+
+
+with 
+
+A type T is a /valid value type for =expected=/, if ~remove_cv_t<T>~ is ~void~ or a complete non-array object type that is not ~in_place_t~, ~unexpect_t~, or a specialization of ~unexpected~.  A program which instantiates class template ~expected<T, E>~ with an argument T that is not a valid value type for ~expected~ is ill-formed.
+
+** Add following at the end [expected.object.obs] observers:
+
+ 1 ~template <class G = E> constexpr E error_or(G&& e) const &;~
+    
+   /Mandates:/ ~is_copy_constructible_v<E>~ is ~true~ and ~is_convertible_v<G, E>~ is ~true~.
+  
+   /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~error()~ otherwise.
+
+ 2 ~template <class G = E> constexpr E error_or(G&& e) &&;~
+    
+   /Mandates:/ ~is_move_constructible_v<E>~ is ~true~ and ~is_convertible_v<G, E>~ is ~true~.
+  
+   /Returns:/ ~std::forward<G>(e)~ if ~has_value()~ is ~true~, ~std::move(error())~ otherwise.
+
+* Acknowledgements
+ - Thanks to Ben Craig for early review and advice on Freestanding.
+
+* Revision History
+
+| Version |       Date | Changes                                                                            |
+|---------+------------+------------------------------------------------------------------------------------|
+|       0 | 2023-01-15 | Initial Draft                                                                      |
+|---------+------------+------------------------------------------------------------------------------------|
+
+* References
+  1. [P1275] Desert Sessions: Improving hostile environment interactions Isabella Muerte https://wg21.link/p1275r0
+  2. getenv https://en.cppreference.com/w/cpp/utility/program/getenv
+  3. A Proposal to Add Process Management to the C++ Standard Library https://wg21.link/P1750
+
+
+  10. Source for this proposal https://github.com/JeffGarland/wg21work/tree/main/monadic_expected

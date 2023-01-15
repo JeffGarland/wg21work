@@ -1,0 +1,983 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2023-01-15 Sun 04:47 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>P2xxx  <code>std::environment</code></title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Jeff Garland" />
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">P2xxx  <code>std::environment</code></h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org6106a4d">Introduction</a></li>
+<li><a href="#org0b07329">Motivation and Scope</a></li>
+<li><a href="#org08c2e49">Design Considerations</a>
+<ul>
+<li><a href="#org2c2a58d">API Scope &#x2013; No Command Line Arguments?</a></li>
+<li><a href="#org13999e1">Thread and Memory Safety</a></li>
+<li><a href="#org9a010dd">Freestanding and Platform Support</a></li>
+<li><a href="#orgdb1c3cd">Unicode</a></li>
+<li><a href="#org9f46a82">API to Write Environment</a></li>
+<li><a href="#orga6d5217"><code>expected&lt;void, E&gt;</code></a></li>
+<li><a href="#orgb77691a">Adding <code>error_or</code> functions</a></li>
+</ul>
+</li>
+<li><a href="#orgbd45871">Other Languages and Libraries</a>
+<ul>
+<li><a href="#orga8aa02c">C</a></li>
+<li><a href="#orgfbca371">Boost Process - environment</a></li>
+<li><a href="#org043e590">Windows</a></li>
+<li><a href="#org3bd8c54">Python</a></li>
+<li><a href="#orga32fd2f">GO</a></li>
+<li><a href="#org9c43b67">Rust</a></li>
+<li><a href="#org5ca1b23">poco (c++)</a></li>
+<li><a href="#org6e9da87">libenvpp (c++)</a></li>
+<li><a href="#org4b5ac1d">QT Libraries</a></li>
+</ul>
+</li>
+<li><a href="#org534574e">Implementations</a></li>
+<li><a href="#orgfa4fc33">Wording</a>
+<ul>
+<li><a href="#org572e044">Feature Test Macro</a></li>
+<li><a href="#org57d13a6">Class template environment [.environment]</a></li>
+<li><a href="#org1814694">[expected.object.general] changes</a></li>
+<li><a href="#orgf4f4cd9">Add following at the end [expected.object.obs] observers:</a></li>
+</ul>
+</li>
+<li><a href="#orgadb441c">Acknowledgements</a></li>
+<li><a href="#org6aebd84">Revision History</a></li>
+<li><a href="#org14b3a66">References</a></li>
+</ul>
+</div>
+</div>
+<p>
+<b>Authors:</b>
+    Jeff Garland
+</p>
+
+<p>
+<b>Audience:</b>
+    SG16, LEWG
+</p>
+
+<p>
+<b>Project:</b>
+    ISO/IEC JTC1/SC22/WG21 14882: Programming Language — C++
+</p>
+
+<p>
+<b>Contact:</b>
+    jeff@crystalclearsoftware.com
+</p>
+
+
+<div id="outline-container-org6106a4d" class="outline-2">
+<h2 id="org6106a4d">Introduction</h2>
+<div class="outline-text-2" id="text-org6106a4d">
+<p>
+Interaction with the operating system environment settings is needed in many C++ applications. Currently the only portable function available is <a href="https://en.cppreference.com/w/cpp/utility/program/getenv"><code>std::getenv</code></a> which provides a C style api.  This is insufficient to support many modern C++ programs.  It is also an unsafe API.
+</p>
+
+<p>
+This paper draws inspiration and requirements from earlier work by <a href="https://wg21.link/p1275">Isabella Muerte (P1275)</a> and <a href="https://wg21.link/P1750">P1750 A Proposal to Add Process Management to the C++ Standard Library</a>. However, it does not propose <code>std::args</code> as in P1275. It does support facilities needed by std::process~ including functions to write to the environment.
+</p>
+
+<blockquote>
+nil</blockquote>
+</div>
+</div>
+<div id="outline-container-org0b07329" class="outline-2">
+<h2 id="org0b07329">Motivation and Scope</h2>
+<div class="outline-text-2" id="text-org0b07329">
+<p>
+Currently the only C++ supported api is inherited from C as shown below.
+</p>
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #483d8b;">#include</span> <span style="color: #8b2252;">&lt;cstdlib&gt;</span>
+
+<span style="color: #228b22;">int</span> <span style="color: #0000ff;">main</span>()
+{
+    <span style="color: #a020f0;">if</span>( <span style="color: #a020f0;">const</span> <span style="color: #228b22;">char</span>* <span style="color: #a0522d;">path</span> = <span style="color: #008b8b;">std</span>::getenv(<span style="color: #8b2252;">"PATH"</span>) )
+        <span style="color: #008b8b;">std</span>::println(<span style="color: #8b2252;">"PATH: {}"</span>, path);
+}
+</pre>
+</div>
+
+<p>
+This function returns a pointer that points at static data which may be reallocated by the platform if the environment is written by posix function such as <code>setenv</code>.  In addition, the pointer is subject to data races in multi-threaded programs.  In addition, it is insufficient to discover the list of environment settings for the program. 
+</p>
+
+
+
+
+
+<p>
+This paper advocates for a library addition, <code>std::environment</code> that provides portable application development.
+</p>
+
+
+<p>
+Before the change we'd write this:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Before</td>
+</tr>
+</tbody>
+</table>
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #228b22;">time_expected</span> <span style="color: #a0522d;">d</span> = from_iso_str( ts );
+<span style="color: #a020f0;">if</span> (d)
+{
+   <span style="color: #228b22;">ptime</span> <span style="color: #a0522d;">t</span> = next_day( *d );
+} 
+<span style="color: #a020f0;">else</span>
+{
+   print_error( d.error() );
+}
+</pre>
+</div>
+
+<p>
+And after, this:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">After</td>
+</tr>
+</tbody>
+</table>
+
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #b22222;">// </span><span style="color: #b22222;">chain a series of functions until there's an error</span>
+<span style="color: #a020f0;">auto</span> <span style="color: #228b22;">d</span> = from_iso_str ( ts )
+               .or_else( print_error )
+               .transform( next_day ) ;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org08c2e49" class="outline-2">
+<h2 id="org08c2e49">Design Considerations</h2>
+<div class="outline-text-2" id="text-org08c2e49">
+<p>
+The following sections discuss various aspects of the design the committee should consider and decide.
+</p>
+</div>
+
+<div id="outline-container-org2c2a58d" class="outline-3">
+<h3 id="org2c2a58d">API Scope &#x2013; No Command Line Arguments?</h3>
+<div class="outline-text-3" id="text-org2c2a58d">
+<p>
+Several languages bundle environment access and command line arguments as related entities.  The original [P1275 <a href="https://wg21.link/p1275">https://wg21.link/p1275</a>]  
+</p>
+
+<ol class="org-ol">
+<li>[P1275] Isabella Muerte</li>
+</ol>
+
+<p>
+Common themes 
+</p>
+
+<ul class="org-ul">
+<li>optional like access</li>
+<li>existence check</li>
+<li>range based access</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org13999e1" class="outline-3">
+<h3 id="org13999e1">Thread and Memory Safety</h3>
+<div class="outline-text-3" id="text-org13999e1">
+<p>
+The environment of a running process on common platforms is global data.  Making modifications to this data from multiple threads and reading from others can cause data races.  C++ is not in a position to change the reality of these platforms so at a minimum it needs to be documented.
+</p>
+
+<p>
+Even worse, keeping a reference to the data is not safe either as the underlying platform may relocate 
+</p>
+
+<p>
+TODO: an example
+</p>
+
+
+<p>
+As an example, POSIX platforms document that <code>getenv</code> is 
+</p>
+
+<div class="NOTES">
+<p>
+
+</p>
+
+<p>
+Rust discussion on thread safety <a href="https://austingroupbugs.net/view.php?id=188">https://austingroupbugs.net/view.php?id=188</a>
+GLIBC discussion <a href="https://sourceware.org/bugzilla/show_bug.cgi?id=15607#c2">https://sourceware.org/bugzilla/show_bug.cgi?id=15607#c2</a>
+<a href="https://github.com/rust-lang/rust/pull/24741">https://github.com/rust-lang/rust/pull/24741</a>
+</p>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9a010dd" class="outline-3">
+<h3 id="org9a010dd">Freestanding and Platform Support</h3>
+<div class="outline-text-3" id="text-org9a010dd">
+<p>
+There are more than a few platforms that do not support the concept of the process environment.  There needs to be a way for those platforms to opt out of support.  As a result, this proposal does not mark the facilities as freestanding. 
+</p>
+
+<p>
+To quote Ben Craig on this point: "Philosophical reason: The environment is global state from the operating environment.  Freestanding attempts to avoid global state and interaction with the operating environment."
+</p>
+
+<p>
+TODO: question to Ben Craig
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdb1c3cd" class="outline-3">
+<h3 id="orgdb1c3cd">Unicode</h3>
+</div>
+<div id="outline-container-org9f46a82" class="outline-3">
+<h3 id="org9f46a82">API to Write Environment</h3>
+<div class="outline-text-3" id="text-org9f46a82">
+<p>
+An API to set environment variables is important for many applications, but especially those that spawn child processes. Posix API's include <code>putenv</code>, <code>setenv</code>, and <code>unsetenv</code>.  The <code>putenv</code> design is inherently unsafe and will not be considered further &#x2013; see <a href="https://stackoverflow.com/questions/5873029/questions-about-putenv-and-setenv">this stckoverflow discussion</a> for details.
+</p>
+</div>
+</div>
+
+
+
+
+
+<div id="outline-container-orga6d5217" class="outline-3">
+<h3 id="orga6d5217"><code>expected&lt;void, E&gt;</code></h3>
+</div>
+
+<div id="outline-container-orgb77691a" class="outline-3">
+<h3 id="orgb77691a">Adding <code>error_or</code> functions</h3>
+<div class="outline-text-3" id="text-orgb77691a">
+<p>
+It has been suggested that <code>error_or</code> functions be added to the proposal.  While the author is sympathetic to the suggestion, since consistency with <code>optional</code> for c++23 is the intent these are not proposed. These can be added later or if LEWG would prefer the author can investigate adding them in this cycle.
+</p>
+
+<p>
+At 2022-06-07 LEWG telecom poll was taken to add this function.  The wording is added in R4 of the paper.
+</p>
+
+<p>
+POLL: Add <code>error_or</code> to <code>expected</code> for C++23.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Strongly Favor</th>
+<th scope="col" class="org-right">Weakly Favor</th>
+<th scope="col" class="org-right">Neutral</th>
+<th scope="col" class="org-right">Weakly Against</th>
+<th scope="col" class="org-right">Strongly Against</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">4</td>
+<td class="org-right">7</td>
+<td class="org-right">2</td>
+<td class="org-right">2</td>
+<td class="org-right">0</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Attendance: 21
+</p>
+
+<p>
+Author Position: N
+</p>
+
+<p>
+Outcome: Consensus in favor.
+</p>
+
+<p>
+As an example usage consider the following code:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Before</td>
+</tr>
+</tbody>
+</table>
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #b22222;">//</span><span style="color: #b22222;">before</span>
+<span style="color: #228b22;">file</span> <span style="color: #0000ff;">create_file</span>(<span style="color: #228b22;">char</span> <span style="color: #a020f0;">const</span>*, <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">error_code</span>&amp;);
+<span style="color: #228b22;">bool</span> <span style="color: #0000ff;">test_and_report</span>(<span style="color: #a020f0;">const</span> <span style="color: #228b22;">error_code</span>&amp;);
+
+<span style="color: #008b8b;">std</span>::<span style="color: #228b22;">error_code</span> <span style="color: #a0522d;">ec</span>;
+<span style="color: #228b22;">file</span> <span style="color: #a0522d;">f</span> = create_file(<span style="color: #8b2252;">"file"</span>, ec);
+<span style="color: #a020f0;">if</span> (test_and_report(ec)) { <span style="color: #a020f0;">return</span>; }
+
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">After</td>
+</tr>
+</tbody>
+</table>
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #228b22;">expected</span>&lt;file, error_code&gt; <span style="color: #0000ff;">create_file</span>(<span style="color: #228b22;">char</span> <span style="color: #a020f0;">const</span>*);
+<span style="color: #228b22;">bool</span> <span style="color: #0000ff;">test_and_report</span>(<span style="color: #a020f0;">const</span> <span style="color: #228b22;">error_code</span>&amp;);
+
+<span style="color: #a020f0;">auto</span> <span style="color: #228b22;">f</span> = create_file(<span style="color: #8b2252;">"file"</span>);
+
+<span style="color: #a020f0;">if</span> (test_and_report(f.error_or({}))) { <span style="color: #a020f0;">return</span>; }
+
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-orgbd45871" class="outline-2">
+<h2 id="orgbd45871">Other Languages and Libraries</h2>
+<div class="outline-text-2" id="text-orgbd45871">
+</div>
+<div id="outline-container-orga8aa02c" class="outline-3">
+<h3 id="orga8aa02c">C</h3>
+<div class="outline-text-3" id="text-orga8aa02c">
+<p>
+<a href="https://en.cppreference.com/w/c/program/getenv">https://en.cppreference.com/w/c/program/getenv</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgfbca371" class="outline-3">
+<h3 id="orgfbca371">Boost Process - environment</h3>
+<div class="outline-text-3" id="text-orgfbca371">
+<div class="org-src-container">
+<pre class="src src-C++">
+<span style="color: #008b8b;">https</span>:<span style="color: #b22222;">//</span><span style="color: #b22222;">www.boost.org/doc/libs/1_81_0/doc/html/process/reference.html#header.boost.process.environment_hpp</span>
+
+<span style="color: #a020f0;">namespace</span> <span style="color: #008b8b;">boost</span> {
+  <span style="color: #a020f0;">namespace</span> <span style="color: #008b8b;">process</span> {
+    <span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">typename</span> <span style="color: #228b22;">Char</span>&gt; <span style="color: #a020f0;">class</span> <span style="color: #228b22;">basic_environment</span>;
+    <span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">typename</span> <span style="color: #228b22;">Char</span>&gt; <span style="color: #a020f0;">class</span> <span style="color: #228b22;">basic_native_environment</span>;
+
+    <span style="color: #a020f0;">typedef</span> <span style="color: #228b22;">basic_native_environment</span>&lt; <span style="color: #228b22;">char</span> &gt; <span style="color: #228b22;">native_environment</span>;  <span style="color: #b22222;">// </span><span style="color: #b22222;">Definition of the environment for the current process. </span>
+    <span style="color: #a020f0;">typedef</span> <span style="color: #228b22;">basic_native_environment</span>&lt; <span style="color: #228b22;">wchar_t</span> &gt; <span style="color: #228b22;">wnative_environment</span>;  <span style="color: #b22222;">// </span><span style="color: #b22222;">Definition of the environment for the current process. </span>
+    <span style="color: #a020f0;">typedef</span> <span style="color: #228b22;">basic_environment</span>&lt; <span style="color: #228b22;">char</span> &gt; <span style="color: #228b22;">environment</span>;  <span style="color: #b22222;">// </span><span style="color: #b22222;">Type definition to hold a seperate environment. </span>
+    <span style="color: #a020f0;">typedef</span> <span style="color: #228b22;">basic_environment</span>&lt; <span style="color: #228b22;">wchar_t</span> &gt; <span style="color: #228b22;">wenvironment</span>;  <span style="color: #b22222;">// </span><span style="color: #b22222;">Type definition to hold a seperate environment. </span>
+  }
+  <span style="color: #a020f0;">namespace</span> <span style="color: #008b8b;">this_process</span> {
+
+    <span style="color: #b22222;">// </span><span style="color: #b22222;">Get the process id of the current process. </span>
+    <span style="color: #228b22;">int</span> <span style="color: #0000ff;">get_id</span>();
+
+    <span style="color: #b22222;">// </span><span style="color: #b22222;">Get the native handle of the current process. </span>
+    <span style="color: #228b22;">native_handle_type</span> <span style="color: #0000ff;">native_handle</span>();
+
+    <span style="color: #b22222;">// </span><span style="color: #b22222;">Get the enviroment of the current process. </span>
+    <span style="color: #228b22;">native_environment</span> <span style="color: #0000ff;">environment</span>();
+
+    <span style="color: #b22222;">// </span><span style="color: #b22222;">Get the enviroment of the current process. </span>
+    <span style="color: #228b22;">wnative_environment</span> <span style="color: #0000ff;">wenvironment</span>();
+
+    <span style="color: #b22222;">// </span><span style="color: #b22222;">Get the path environment variable of the current process runs. </span>
+    <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">vector</span>&lt; <span style="color: #008b8b;">boost</span>::<span style="color: #008b8b;">process</span>::<span style="color: #008b8b;">filesystem</span>::path &gt; <span style="color: #0000ff;">path</span>();
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org043e590" class="outline-3">
+<h3 id="org043e590">Windows</h3>
+<div class="outline-text-3" id="text-org043e590">
+<p>
+<a href="https://learn.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-getenvironmentstrings?redirectedfrom=MSDN">https://learn.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-getenvironmentstrings?redirectedfrom=MSDN</a>
+</p>
+
+<p>
+If the function fails, the return value is NULL.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c++"><span style="color: #228b22;">LPCH</span> <span style="color: #0000ff;">GetEnvironmentStrings</span>();
+
+</pre>
+</div>
+
+<div class="notes">
+<p>
+
+</p>
+
+<p>
+The GetEnvironmentStrings function returns a pointer to a block of memory that contains the environment variables of the calling process (both the system and the user environment variables). Each environment block contains the environment variables in the following format:
+</p>
+
+<p>
+Each environment block contains the environment variables in the following format:
+</p>
+
+<p>
+Var1=Value1\0
+Var2=Value2\0
+Var3=Value3\0
+&#x2026;
+VarN=ValueN\0\0
+</p>
+
+<p>
+The name of an environment variable cannot include an equal sign (=).
+</p>
+
+<p>
+Treat this memory as read-only; do not modify it directly. To add or change an environment variable, use the GetEnvironmentVariable and SetEnvironmentVariable functions.
+</p>
+
+<p>
+When the block returned by GetEnvironmentStrings is no longer needed, it should be freed by calling the FreeEnvironmentStrings function.
+</p>
+
+<p>
+Note that the ANSI version of this function, GetEnvironmentStringsA, returns OEM characters.
+</p>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3bd8c54" class="outline-3">
+<h3 id="org3bd8c54">Python</h3>
+<div class="outline-text-3" id="text-org3bd8c54">
+<p>
+<a href="https://docs.python.org/3/library/os.html#os.getenv">https://docs.python.org/3/library/os.html#os.getenv</a>
+</p>
+
+<p>
+<a href="https://docs.python.org/3/library/os.html#os.environ">https://docs.python.org/3/library/os.html#os.environ</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python">
+<span style="color: #a020f0;">import</span> os
+<span style="color: #a020f0;">print</span>(os.environ[<span style="color: #8b2252;">'HOME'</span>])
+
+<span style="color: #b22222;"># </span><span style="color: #b22222;">print all</span>
+<span style="color: #a020f0;">print</span>(os.environ) 
+
+<span style="color: #b22222;"># </span><span style="color: #b22222;">Returns `None` if the key doesn't exist</span>
+<span style="color: #a020f0;">print</span>(os.environ.get(<span style="color: #8b2252;">'KEY_THAT_MIGHT_EXIST'</span>))
+
+<span style="color: #b22222;"># </span><span style="color: #b22222;">Returns `default_value` if the key doesn't exist</span>
+<span style="color: #a020f0;">print</span>(os.environ.get(<span style="color: #8b2252;">'KEY_THAT_MIGHT_EXIST'</span>, default_value))
+
+<span style="color: #b22222;"># </span><span style="color: #b22222;">Returns `default_value` if the key doesn't exist</span>
+<span style="color: #a020f0;">print</span>(os.getenv(<span style="color: #8b2252;">'KEY_THAT_MIGHT_EXIST'</span>, default_value))
+
+</pre>
+</div>
+
+<div class="NOTES">
+<p>
+A mapping object where keys and values are strings that represent the process environment. For example, environ['HOME'] is the pathname of your home directory (on some platforms), and is equivalent to getenv("HOME") in C.
+</p>
+
+<p>
+This mapping is captured the first time the os module is imported, typically during Python startup as part of processing site.py. Changes to the environment made after this time are not reflected in os.environ, except for changes made by modifying os.environ directly.
+</p>
+
+<p>
+This mapping may be used to modify the environment as well as query the environment. putenv() will be called automatically when the mapping is modified.
+</p>
+
+<p>
+On Unix, keys and values use sys.getfilesystemencoding() and 'surrogateescape' error handler. Use environb if you would like to use a different encoding.
+</p>
+
+<p>
+Note
+</p>
+
+<p>
+Calling putenv() directly does not change os.environ, so it’s better to modify os.environ.
+</p>
+
+<p>
+Note
+</p>
+
+<p>
+On some platforms, including FreeBSD and macOS, setting environ may cause memory leaks. Refer to the system documentation for putenv().
+</p>
+
+<p>
+You can delete items in this mapping to unset environment variables. unsetenv() will be called automatically when an item is deleted from os.environ, and when one of the pop() or clear() methods is called.
+</p>
+
+<p>
+Changed in version 3.9: Updated to support PEP 584’s merge (|) and update (|=) operators.
+</p>
+
+</div>
+
+<p>
+<a href="https://docs.python.org/3/library/os.html#os.putenv">https://docs.python.org/3/library/os.html#os.putenv</a>
+</p>
+<div class="NOTES">
+<p>
+
+</p>
+
+<p>
+Set the environment variable named key to the string value. Such changes to the environment affect subprocesses started with os.system(), popen() or fork() and execv().
+</p>
+
+<p>
+Assignments to items in os.environ are automatically translated into corresponding calls to putenv(); however, calls to putenv() don’t update os.environ, so it is actually preferable to assign to items of os.environ. This also applies to getenv() and getenvb(), which respectively use os.environ and os.environb in their implementations.
+</p>
+
+<p>
+Note
+</p>
+
+<p>
+On some platforms, including FreeBSD and macOS, setting environ may cause memory leaks. Refer to the system documentation for putenv().
+</p>
+
+<p>
+Raises an auditing event os.putenv with arguments key, value.
+</p>
+
+<p>
+Changed in version 3.9: The function is now always available.
+</p>
+
+</div>
+
+<p>
+<a href="https://docs.python.org/3/library/os.html#os.unsetenv">https://docs.python.org/3/library/os.html#os.unsetenv</a>
+</p>
+<div class="NOTES">
+<p>
+Unset (delete) the environment variable named key. Such changes to the environment affect subprocesses started with os.system(), popen() or fork() and execv().
+</p>
+
+<p>
+Deletion of items in os.environ is automatically translated into a corresponding call to unsetenv(); however, calls to unsetenv() don’t update os.environ, so it is actually preferable to delete items of os.environ.
+</p>
+
+<p>
+Raises an auditing event os.unsetenv with argument key.
+</p>
+
+<p>
+Changed in version 3.9: The function is now always available and is also available on Windows.
+</p>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga32fd2f" class="outline-3">
+<h3 id="orga32fd2f">GO</h3>
+<div class="outline-text-3" id="text-orga32fd2f">
+<div class="org-src-container">
+<pre class="src src-go">
+some_var := os.Getenv("SOME_VAR")
+
+os.Setenv("NAME", "gopher")
+os.Setenv("BURROW", "/usr/gopher")
+fmt.Println(os.ExpandEnv("$NAME lives in ${BURROW}."))
+
+val, ok := os.LookupEnv(key)
+if !ok {
+  fmt.Printf("%s not set\n", key)
+}
+
+// func LookupEnv(key string) (string, bool)
+// func Setenv(key, value string) error
+// func Unsetenv(key string) error
+// func Environ() []string
+
+for _, vars := range os.Environ() {
+        envPair := strings.SplitN(variables, "=", 2)
+        fmt.Println(envPair[0]) 
+}
+
+</pre>
+</div>
+
+<p>
+<a href="https://pkg.go.dev/os#Clearenv">https://pkg.go.dev/os#Clearenv</a>
+<a href="https://pkg.go.dev/os#Environ">https://pkg.go.dev/os#Environ</a>
+<a href="https://pkg.go.dev/os#ExpandEnv">https://pkg.go.dev/os#ExpandEnv</a>
+<a href="https://pkg.go.dev/os#LookupEnv">https://pkg.go.dev/os#LookupEnv</a>
+<a href="https://pkg.go.dev/os#Setenv">https://pkg.go.dev/os#Setenv</a>
+</p>
+</div>
+</div>
+<div id="outline-container-org9c43b67" class="outline-3">
+<h3 id="org9c43b67">Rust</h3>
+<div class="outline-text-3" id="text-org9c43b67">
+<p>
+Rust provides an <code>std::env</code> object 
+</p>
+
+<p>
+<a href="https://doc.rust-lang.org/std/env/index.html">https://doc.rust-lang.org/std/env/index.html</a>
+</p>
+
+
+<p>
+And low level functions 
+</p>
+
+<p>
+remove<sub>var</sub>
+</p>
+
+<p>
+<a href="https://doc.rust-lang.org/std/env/fn.remove_var.html">https://doc.rust-lang.org/std/env/fn.remove_var.html</a>
+</p>
+</div>
+</div>
+
+
+
+<div id="outline-container-org5ca1b23" class="outline-3">
+<h3 id="org5ca1b23">poco (c++)</h3>
+<div class="outline-text-3" id="text-org5ca1b23">
+<div class="org-src-container">
+<pre class="src src-c++">
+<span style="color: #b22222;">// </span><span style="color: #b22222;">Throws a NotFoundException if the variable does not exist.</span>
+<span style="color: #a020f0;">static</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> <span style="color: #0000ff;">get</span>(<span style="color: #a020f0;">const</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> &amp; <span style="color: #a0522d;">name</span>, <span style="color: #a020f0;">const</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> &amp; <span style="color: #a0522d;">defaultValue</span>);
+<span style="color: #a020f0;">static</span> <span style="color: #228b22;">void</span> <span style="color: #0000ff;">set</span>(<span style="color: #a020f0;">const</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> &amp; <span style="color: #a0522d;">name</span>, <span style="color: #a020f0;">const</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> &amp; <span style="color: #a0522d;">value</span>);
+<span style="color: #a020f0;">static</span> <span style="color: #228b22;">bool</span> <span style="color: #0000ff;">has</span>(<span style="color: #a020f0;">const</span> <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> &amp; <span style="color: #a0522d;">name</span>);
+
+</pre>
+</div>
+
+<p>
+<a href="https://docs.pocoproject.org/current/Poco.Environment.html#13404">https://docs.pocoproject.org/current/Poco.Environment.html#13404</a>
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org6e9da87" class="outline-3">
+<h3 id="org6e9da87">libenvpp (c++)</h3>
+<div class="outline-text-3" id="text-org6e9da87">
+<p>
+Prefix based enivironment access
+</p>
+
+<p>
+<a href="https://github.com/ph3at/libenvpp">https://github.com/ph3at/libenvpp</a>
+</p>
+</div>
+</div>
+
+
+
+
+<div id="outline-container-org4b5ac1d" class="outline-3">
+<h3 id="org4b5ac1d">QT Libraries</h3>
+<div class="outline-text-3" id="text-org4b5ac1d">
+<p>
+<a href="https://doc.qt.io/qt-5/qtglobal.html#qgetenv">https://doc.qt.io/qt-5/qtglobal.html#qgetenv</a>
+<a href="https://doc.qt.io/qt-5/qtglobal.html#qputenv">https://doc.qt.io/qt-5/qtglobal.html#qputenv</a>
+<a href="https://doc.qt.io/qt-5/qbytearray.html">https://doc.qt.io/qt-5/qbytearray.html</a>
+</p>
+
+<p>
+<a href="https://doc.qt.io/qt-5/qtglobal.html#qEnvironmentVariableIsSet">https://doc.qt.io/qt-5/qtglobal.html#qEnvironmentVariableIsSet</a>
+<a href="https://doc.qt.io/qt-5/qtglobal.html#qEnvironmentVariableIsEmpty">https://doc.qt.io/qt-5/qtglobal.html#qEnvironmentVariableIsEmpty</a>
+</p>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-org534574e" class="outline-2">
+<h2 id="org534574e">Implementations</h2>
+</div>
+
+
+<div id="outline-container-orgfa4fc33" class="outline-2">
+<h2 id="orgfa4fc33">Wording</h2>
+<div class="outline-text-2" id="text-orgfa4fc33">
+</div>
+<div id="outline-container-org572e044" class="outline-3">
+<h3 id="org572e044">Feature Test Macro</h3>
+<div class="outline-text-3" id="text-org572e044">
+<p>
+Set the <code>__cpp_lib_environment</code> feature test macro.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org57d13a6" class="outline-3">
+<h3 id="org57d13a6">Class template environment [.environment]</h3>
+<div class="outline-text-3" id="text-org57d13a6">
+<p>
+After <code>value_or</code> functions in synopsis at [expected.object.obs] add the following:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-C++"><span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">G</span> = <span style="color: #228b22;">E</span>&gt; constexpr <span style="color: #228b22;">E</span> <span style="color: #0000ff;">error_or</span>(<span style="color: #228b22;">G</span>&amp;&amp;) <span style="color: #a020f0;">const</span> &amp;;
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">G</span> = <span style="color: #228b22;">E</span>&gt; constexpr <span style="color: #228b22;">E</span> <span style="color: #0000ff;">error_or</span>(<span style="color: #228b22;">G</span>&amp;&amp;) &amp;&amp;;
+
+<span style="color: #b22222;">// </span><span style="color: #b22222;">[expected.object.monadic], monadic operations</span>
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> and_then(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> or_else(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> or_else(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> or_else(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> or_else(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) &amp;&amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;;
+<span style="color: #a020f0;">template</span> &lt;<span style="color: #a020f0;">class</span> <span style="color: #228b22;">F</span>&gt; <span style="color: #228b22;">constexpr</span> <span style="color: #a020f0;">auto</span> transform_error(<span style="color: #228b22;">F</span>&amp;&amp; <span style="color: #a0522d;">f</span>) <span style="color: #a020f0;">const</span> &amp;&amp;;
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1814694" class="outline-3">
+<h3 id="org1814694">[expected.object.general] changes</h3>
+<div class="outline-text-3" id="text-org1814694">
+<p>
+Replace paragragh 2 sentence 1 as follows:
+<del>A program that instantiates the definition of template expected&lt;T, E&gt; for a reference type, a function type, or for possibly cv-qualified types in<sub>place</sub><sub>t</sub>, unexpect<sub>t</sub>, or a specialization of unexpected for the T parameter is ill-formed.</del>
+</p>
+
+<p>
+with 
+</p>
+
+<p>
+A type T is a <i>valid value type for <code>expected</code></i>, if <code>remove_cv_t&lt;T&gt;</code> is <code>void</code> or a complete non-array object type that is not <code>in_place_t</code>, <code>unexpect_t</code>, or a specialization of <code>unexpected</code>.  A program which instantiates class template <code>expected&lt;T, E&gt;</code> with an argument T that is not a valid value type for <code>expected</code> is ill-formed.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf4f4cd9" class="outline-3">
+<h3 id="orgf4f4cd9">Add following at the end [expected.object.obs] observers:</h3>
+<div class="outline-text-3" id="text-orgf4f4cd9">
+<p>
+1 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) const &amp;;</code>
+</p>
+
+<p>
+<i>Mandates:</i> <code>is_copy_constructible_v&lt;E&gt;</code> is <code>true</code> and <code>is_convertible_v&lt;G, E&gt;</code> is <code>true</code>.
+</p>
+
+<p>
+<i>Returns:</i> <code>std::forward&lt;G&gt;(e)</code> if <code>has_value()</code> is <code>true</code>, <code>error()</code> otherwise.
+</p>
+
+<p>
+2 <code>template &lt;class G = E&gt; constexpr E error_or(G&amp;&amp; e) &amp;&amp;;</code>
+</p>
+
+<p>
+<i>Mandates:</i> <code>is_move_constructible_v&lt;E&gt;</code> is <code>true</code> and <code>is_convertible_v&lt;G, E&gt;</code> is <code>true</code>.
+</p>
+
+<p>
+<i>Returns:</i> <code>std::forward&lt;G&gt;(e)</code> if <code>has_value()</code> is <code>true</code>, <code>std::move(error())</code> otherwise.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgadb441c" class="outline-2">
+<h2 id="orgadb441c">Acknowledgements</h2>
+<div class="outline-text-2" id="text-orgadb441c">
+<ul class="org-ul">
+<li>Thanks to Ben Craig for early review and advice on Freestanding.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org6aebd84" class="outline-2">
+<h2 id="org6aebd84">Revision History</h2>
+<div class="outline-text-2" id="text-org6aebd84">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Version</th>
+<th scope="col" class="org-right">Date</th>
+<th scope="col" class="org-left">Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">0</td>
+<td class="org-right">2022-12-18</td>
+<td class="org-left">Initial Draft</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div id="outline-container-org14b3a66" class="outline-2">
+<h2 id="org14b3a66">References</h2>
+<div class="outline-text-2" id="text-org14b3a66">
+<ol class="org-ol">
+<li>[P1275] Desert Sessions: Improving hostile environment interactions Isabella Muerte <a href="https://wg21.link/p1275r0">https://wg21.link/p1275r0</a></li>
+<li>getenv <a href="https://en.cppreference.com/w/cpp/utility/program/getenv">https://en.cppreference.com/w/cpp/utility/program/getenv</a></li>
+<li>A Proposal to Add Process Management to the C++ Standard Library <a href="https://wg21.link/P1750">https://wg21.link/P1750</a></li>
+</ol>
+
+
+<ol class="org-ol">
+<li>Source for this proposal <a href="https://github.com/JeffGarland/wg21work/tree/main/monadic_expected">https://github.com/JeffGarland/wg21work/tree/main/monadic_expected</a></li>
+</ol>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Jeff Garland</p>
+<p class="date">Created: 2023-01-15 Sun 04:47</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

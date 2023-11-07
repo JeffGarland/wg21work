@@ -1,0 +1,202 @@
+#+AUTHOR: Jeff Garland, David Sankel, Matthias Kretz, Ruslan Arutyunyan
+#+TITLE: P3024R0 Additional interfaces for ~std::simd~
+#+EMAIL: jeff@crystalclearsoftware.com
+#+REVISION: 0
+#+STARTUP: inlineimages
+#+OPTIONS: num:nil toc:nil reveal_slide_number:"c/t" 
+#+REVEAL_HLEVEL: 1
+#+REVEAL_THEME: white_contrast_compact_verbatim_headers
+#+REVEAL_TRANS: fade
+
+* Goals
+- Improve the experience of all users of ~std::simd~  
+- Increase the ~std::simd~ coherence with standard c++
+- Continue to support best performance possible  
+- Outline path forward for c++26 ~simd~ interface
+- Increase committee consensus on final direction forward
+* Outline
+- Construction
+  - range constructors
+  - safety
+- Vectorizable type support: enum and ~std::byte~
+- operator[] and proxy references
+- input-output support
+- ~simd~ as a range
+- regular redux  
+* Construction of ~std::simd~
+** Current api
+#+begin_src c++
+  constexpr simd() noexcept;  //does not initialize
+
+  template<class U> 
+  constexpr simd(U&& value) noexcept;  //broadcast
+
+  template<class U, class UAbi>
+  constexpr explicit simd(const simd<U, UAbi>&) noexcept;
+
+  template<class G> constexpr explicit simd(G&& gen) noexcept;
+
+  template<contiguous_iterator It, class Flags = element_aligned_tag>
+  constexpr simd(const It& first, Flags = {})
+
+  template<class U, class Flags = element_aligned_tag> 
+  void copy_from(const U* mem, Flags = {}) &&
+
+  template<class U, class Flags = element_aligned_tag>
+  void copy_to(U* mem, Flags = {}) const &&;
+#+end_src
+** Current usage
+#+begin_src c++
+#include <experimental/simd>
+namespace stdx = std::experimental;
+using intv8  = stdx::fixed_size_simd<int,8>;
+
+intv8 add_v(const intv8& a, const intv8& b)
+{
+    return a + b;
+}
+int main()
+{
+    int a_data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    intv8 a;
+    a.copy_from(&a_data[0], stdx::element_aligned);
+    int b_data[] = {7, 6, 5, 4, 3, 2, 1, 0};
+    intv8 b;
+    b.copy_from(&b_data[0], stdx::element_aligned);
+    intv8 c = add_v( a, b );
+ 
+    for (int i=0; i< c.size(); i++)
+       print("{} ", c[i]);
+}
+#+end_src
+TODO godbolt
+** Concerns and omissions
+- ~copy_from~ and ~continguous_iterator~ api are tricky to use
+  - on user to ensure does not run off the end
+  - occurs when: size mismatch between simd and data type
+  - with ~native_abi~ version size determined by compiler
+  - done for efficiency
+- default construction does not initialize
+  - UB to use it in that state
+** Usage Desires - contiguous static extent types
+- ~array~, c array, ~span~, ~initializer_list~
+- * ~initializer_list~ interacts poorly with broadcast constructor
+- size mismatch
+  - too small --> zero remaining elements
+  - too large --> not compile
+#+begin_src c++
+  namespace stdx = std::experimental;
+  using simd_int_8  = stdx::fixed_size_simd<int,8>;
+
+  std::array<int, 8> data = {0, 1, 2, 3, 4, 5, 6, 7};
+  simd_int_8 simd1{data};
+
+  std::span<int, 8> sdata{data};
+  simd_int_8 simd2{sdata};
+
+  int cdata[] = {0, 1, 2, 3, 4, 5, 6, 7};
+  simd_int_8 simd3{cdata};
+
+  simd_int_8 simd4 = {0, 1, 2, 3, 4, 5, 6, 7}; // initializer list*
+#+end_src
+** Usage Desires - contiguous dynamic extent types
+#+BEGIN_NOTES
+C++ programmers will expect ~std::simd~ to easily construct from other standard library types
+#+END_NOTES
+- ~vector<data-parallel-type>~
+- ~string~ and ~string_view~
+- ~span<data-parallel-type>~
+#+begin_src c++
+  namespace stdx = std::experimental;
+  using simd_int_8  = stdx::fixed_size_simd<int,8>;
+
+  std::vector<int> vdata = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  simd_int_8 simd1{data}; //drops 8, 9
+
+  std::span<int> data{vdata};
+  simd_int_8 simd2{sdata}; //drops 8, 9
+
+  std::string s{"hello");
+  simd_int_8 simd3{s}; //'zero out' remaining
+  
+#+end_src
+
+** Contiguous Range Constructor Proposal
+#+begin_src c++
+
+  template<contiguous_range R, class Flags = element_aligned_tag>
+  constexpr simd(R&& r, Flags = {})
+
+  template<contiguous_iterator It, class Flags = element_aligned_tag>
+  constexpr simd( simdunsafe{}, const It& first, Flags = {})
+#+end_src
+- range constructor correctly handles mismatched size
+  - cost will be measured
+- max performance still allowed using unsafe opt in    
+- same fixup for ~copy_from~
+** Default constructor and UB
+The following code is undefined behavior:
+#+begin_src c++
+  std::simd<int> simd, simd2;
+  auto simd_result = simd + simd2;
+  //opt in to unitialized?
+  std::simd<int> simd { simd::uninitialize };
+#+end_src
+- unfortunately ~vector<simd>~ is something we need
+- performance is impacted
+- not sure of a great approach  
+#+BEGIN_NOTES
+In this toy example it's obvious, but in other contexts where simd is passed as a parameter it would be easy to pass an unitialized simd as a parameter.  Since there's not way to interogate the simd state this is less than ideal.
+#+END_NOTES
+
+** initializer list
+- [[http://wg21.link/P2876][P2876R0 Proposal to extend std::simd with more constructors and accessors]].
+- TODO - more here on the broadcast issue
+* Vectorizeable type Type support enum and ~std::byte~
+- ~std::byte~ is a safer ~unsigned char~ for bitops
+- makes sense to make simd from ~span<byte>~
+- generalized enum support is more complex
+- recommendation: defer general enum support to later    
+#+BEGIN_NOTES
+What about ~std::simd<std::byte>~? ~std::byte~ is a replacement for ~unsigned char~ that adds type safety and bit manipulation operations. One can certainly imagine writing simd algorithms for byte. 
+#+END_NOTES
+
+* ~Operator[]~ and proxy reference
+- simd is not a container
+  - having ~operator[]~ confusing  
+  - proxy can create issues (see also, ~vector<bool>~)
+- recommendation
+  - rename to ~get~ and ~set~
+  - leave ~operator[]~ when we can make it work well everywhere
+- https://godbolt.org/z/cfodY4G1E
+#+BEGIN_SRC C++
+constexpr reference operator[](simd-size-type) &;
+constexpr value_type operator[](simd-size-type) const&
+
+#+END_SRC
+* Input-output support
+- at a miminmum we'd like output support in format
+- pretty much expect output like vector
+- if range, it's for free (see later)
+- iostreams?
+  - no lets not
+* Regular redux
+- after further discussion there are 2 possible paths
+- first: current paper approach
+- regular with ~operator==~ and ~operator!=~
+  - remove all the ~operator<~, ~operator>~ etc
+  - replace them with named functions
+  - ~xsimd~ does this and calls them ~eq~, ~neq~, ~gt~, etc
+** Pros for current approach
+- minimal change with existing scalar alg to work with simd
+- minimize cognitive overhead when learning simd
+- discoverability
+  - if you say ~if (simd == simd )~ compile fail
+** Pros for regular approach
+- fundamental regular operations have an exclusive meaning in c++ aside from valarray
+- ~vector<simd<T>>~ is a use case and ~operator==~ works
+- default of operator== works with simd data members
+  - secondary use case of simd can make use of existing generic algorithms  
+
+* References
+  1. [P1978] Kretz https://wg21.link/P1978

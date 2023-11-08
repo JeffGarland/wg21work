@@ -77,15 +77,18 @@ int main()
 #+end_src
 https://godbolt.org/z/sPdzGWEnx
 ** Concerns and omissions
-- ~copy_from~ and ~continguous_iterator~ api have a precondition (~[it, it + size)~ must be a valid range)
-  - on caller to ensure does not run off the end
+- ~copy_from~ and ~continguous_iterator~ api
+  - precondition: ~[it, it + size)~ must be a valid range
+  - caller must ensure does not run off the end
   - occurs when: size mismatch between simd and data type
   - default simd size determined by implementation (compiler flags)
   - rationale: efficiency
-- default construction does not initialize (~T x;~ doesn't, ~T x();~ zero-initializes)
+- default construction does not initialize
+  - ~T x;~ doesn't, ~T x();~ zero-initializes
   - UB to read from object in that state
 ** Usage Desires - contiguous static extent types
-- ~array~, c array, ~span~, ~initializer_list~ (cf. P2876R0 "Proposal to extend std::simd with more constructors and accessors")
+- ~array~, c array, ~span~, ~initializer_list~
+  - [[http://wg21.link/P2876][P2876R0 Proposal to extend std::simd with more constructors and accessors]]
   - ~initializer_list~ interacts poorly with broadcast constructor
 - size mismatch
   - too small --> default initialize remaining elements

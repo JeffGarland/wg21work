@@ -15,11 +15,11 @@
 <div class="reveal">
 <div class="slides">
 <section id="sec-title-slide">
-<h1 class="title">P3024R0 Interface Directions for <code>std::simd</code></h1><h2 class="author">Jeff Garland, David Sankel, Matthias Kretz, Ruslan Arutyunyan</h2><p class="date">Created: 2023-11-08 Wed 08:37</p>
+<h1 class="title">P3024R0 Interface Directions for <code>std::simd</code></h1><h2 class="author">Jeff Garland, David Sankel, Matthias Kretz, Ruslan Arutyunyan</h2><p class="date">Created: 2023-11-08 Wed 11:25</p>
 </section>
 <section>
-<section id="slide-org57d073d">
-<h2 id="org57d073d">Goals &amp; Context</h2>
+<section id="slide-orgbf1fc25">
+<h2 id="orgbf1fc25">Goals &amp; Context</h2>
 <ul>
 <li>Improve the experience of all users of <code>std::simd</code></li>
 <li>Increase the <code>std::simd</code> coherence with standard c++</li>
@@ -37,8 +37,8 @@
 </section>
 </section>
 <section>
-<section id="slide-orge38f2fc">
-<h2 id="orge38f2fc">Outline</h2>
+<section id="slide-org16e9528">
+<h2 id="org16e9528">Outline</h2>
 <ul>
 <li>Construction
 <ul>
@@ -57,13 +57,13 @@
 </section>
 </section>
 <section>
-<section id="slide-org87b4450">
-<h2 id="org87b4450">Construction of <code>std::simd</code></h2>
-<div class="outline-text-2" id="text-org87b4450">
+<section id="slide-org783f1d4">
+<h2 id="org783f1d4">Construction of <code>std::simd</code></h2>
+<div class="outline-text-2" id="text-org783f1d4">
 </div>
 </section>
-<section id="slide-org7dc7fe2">
-<h3 id="org7dc7fe2">Current api</h3>
+<section id="slide-org4fe2844">
+<h3 id="org4fe2844">Current api</h3>
 <div class="org-src-container">
 
 <pre class="src src-c++"><span style="color: #a020f0;">constexpr</span> <span style="color: #0000ff;">simd</span>() <span style="color: #a020f0;">noexcept</span>;  <span style="color: #b22222;">//</span><span style="color: #b22222;">does not initialize</span>
@@ -87,8 +87,8 @@
 </pre>
 </div>
 </section>
-<section id="slide-org1f94ead">
-<h3 id="org1f94ead">Current usage</h3>
+<section id="slide-orgc91a020">
+<h3 id="orgc91a020">Current usage</h3>
 <div class="org-src-container">
 
 <pre class="src src-c++"><span style="color: #483d8b;">#include</span> <span style="color: #8b2252;">&lt;experimental/simd&gt;</span>
@@ -121,30 +121,33 @@
 <a href="https://godbolt.org/z/sPdzGWEnx">https://godbolt.org/z/sPdzGWEnx</a>
 </p>
 </section>
-<section id="slide-orgb2099d4">
-<h3 id="orgb2099d4">Concerns and omissions</h3>
+<section id="slide-org857ef6f">
+<h3 id="org857ef6f">Concerns and omissions</h3>
 <ul>
-<li><code>copy_from</code> and <code>continguous_iterator</code> api are tricky to use
+<li><code>copy_from</code> and <code>continguous_iterator</code> api
 <ul>
-<li>on user to ensure does not run off the end</li>
+<li>precondition: <code>[it, it + size)</code> must be a valid range</li>
+<li>caller must ensure does not run off the end</li>
 <li>occurs when: size mismatch between simd and data type</li>
-<li>with <code>native_abi</code> version size determined by compiler</li>
-<li>done for efficiency</li>
+<li>default simd size determined by implementation (compiler flags)</li>
+<li>rationale: efficiency</li>
 
 </ul></li>
 <li>default construction does not initialize
 <ul>
-<li>UB to use it in that state</li>
+<li><code>T x;</code> doesn't, <code>T x();</code> zero-initializes</li>
+<li>UB to read from object in that state</li>
 
 </ul></li>
 
 </ul>
 </section>
-<section id="slide-orge4429f3">
-<h3 id="orge4429f3">Usage Desires - contiguous static extent types</h3>
+<section id="slide-org8fd069d">
+<h3 id="org8fd069d">Usage Desires - contiguous static extent types</h3>
 <ul>
-<li><code>array</code>, c array, <code>span</code>, <code>initializer_list</code>
+<li><code>array</code>, c array, <code>span</code>, ~initializer<sub>list</sub>~v
 <ul>
+<li><a href="http://wg21.link/P2876">P2876R0 Proposal to extend std::simd with more constructors and accessors</a></li>
 <li><code>initializer_list</code> interacts poorly with broadcast constructor</li>
 
 </ul></li>
@@ -174,8 +177,8 @@
 </pre>
 </div>
 </section>
-<section id="slide-org42c339b">
-<h3 id="org42c339b">Usage Desires - contiguous dynamic extent types</h3>
+<section id="slide-org8d85bae">
+<h3 id="org8d85bae">Usage Desires - contiguous dynamic extent types</h3>
 <aside class="notes">
 <p>
 C++ programmers will expect <code>std::simd</code> to easily construct from other standard library types
@@ -205,8 +208,8 @@ C++ programmers will expect <code>std::simd</code> to easily construct from othe
 </div>
 
 </section>
-<section id="slide-org0b22b45">
-<h3 id="org0b22b45">Contiguous Range Constructor Proposal</h3>
+<section id="slide-org1d1e0d6">
+<h3 id="org1d1e0d6">Contiguous Range Constructor Proposal</h3>
 <ul>
 <li>recommendation:
 <ul>
@@ -240,8 +243,8 @@ C++ programmers will expect <code>std::simd</code> to easily construct from othe
 </pre>
 </div>
 </section>
-<section id="slide-org826a756">
-<h3 id="org826a756">Default constructor and UB</h3>
+<section id="slide-orgc6a85f0">
+<h3 id="orgc6a85f0">Default constructor and UB</h3>
 <ul>
 <li>unfortunately <code>vector&lt;simd&gt;</code> is something we need</li>
 <li>performance is impacted</li>
@@ -265,8 +268,8 @@ In this toy example it's obvious, but in other contexts where simd is passed as 
 </aside>
 
 </section>
-<section id="slide-org38479ef">
-<h3 id="org38479ef">initializer list</h3>
+<section id="slide-org9657dfc">
+<h3 id="org9657dfc">initializer list</h3>
 <ul>
 <li><a href="http://wg21.link/P2876">P2876R0 Proposal to extend std::simd with more constructors and accessors</a>.</li>
 <li>Recommendation:
@@ -298,8 +301,8 @@ In this toy example it's obvious, but in other contexts where simd is passed as 
 </section>
 </section>
 <section>
-<section id="slide-org84f2318">
-<h2 id="org84f2318">Vectorizable type Type support enum and <code>std::byte</code></h2>
+<section id="slide-org5b7c06d">
+<h2 id="org5b7c06d">Vectorizable type Type support enum and <code>std::byte</code></h2>
 <ul>
 <li><code>std::byte</code> is a safer <code>unsigned char</code> for bitops</li>
 <li>makes sense to make simd from <code>span&lt;byte&gt;</code></li>
@@ -317,8 +320,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-org00d9250">
-<h2 id="org00d9250"><code>Operator[]</code> and proxy reference</h2>
+<section id="slide-orgc26ced9">
+<h2 id="orgc26ced9"><code>Operator[]</code> and proxy reference</h2>
 <ul>
 <li>simd is not a container
 <ul>
@@ -345,8 +348,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-orgd03e3db">
-<h2 id="orgd03e3db">simd as range</h2>
+<section id="slide-org2775898">
+<h2 id="org2775898">simd as range</h2>
 <ul>
 <li>discussed in several papers</li>
 <li>need <code>begin</code> <code>end</code> <code>iterators</code></li>
@@ -368,8 +371,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-org72e49ee">
-<h2 id="org72e49ee">Input-output support</h2>
+<section id="slide-org315c53c">
+<h2 id="org315c53c">Input-output support</h2>
 <ul>
 <li>at a mimimum we'd like output support in format</li>
 <li>pretty much expect output like vector</li>
@@ -388,8 +391,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-orgb035824">
-<h2 id="orgb035824">Algo naming</h2>
+<section id="slide-org6cdf497">
+<h2 id="org6cdf497">Algo naming</h2>
 <ul>
 <li>naming differences between std algo and simd</li>
 <li>should try to have as much symmetry as possible</li>
@@ -404,8 +407,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-org27b86ab">
-<h2 id="org27b86ab">Regular redux</h2>
+<section id="slide-org1d3352e">
+<h2 id="org1d3352e">Regular redux</h2>
 <ul>
 <li>after further discussion there are 2 possible paths</li>
 <li>first: current paper approach</li>
@@ -420,8 +423,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </ul>
 
 </section>
-<section id="slide-orga358cb9">
-<h3 id="orga358cb9">Comparison</h3>
+<section id="slide-orge418eac">
+<h3 id="orge418eac">Comparison</h3>
 <ul>
 <li>what do you value more:  simd onboarding or standard library coherence?</li>
 
@@ -467,8 +470,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-orgfee0ea3">
-<h2 id="orgfee0ea3">References</h2>
+<section id="slide-org7bb8069">
+<h2 id="org7bb8069">References</h2>
 <ol>
 <li><a href="https://wg21.link/P1928">P1928 std::simd</a> Matthias Kretz</li>
 <li><a href="http://wg21.link/P2876">P2876 Proposal to extend std::simd with more constructors and accessors</a> Daniel Towner Matthias Kretz</li>

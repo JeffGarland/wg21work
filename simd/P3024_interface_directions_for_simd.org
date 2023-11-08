@@ -19,7 +19,6 @@
 - Context
   - agree on almost everything
   - where we disagree we, agree on the characterization of the tradeoffs
-
 * Outline
 - Construction
   - range constructors
@@ -28,6 +27,7 @@
 - operator[] and proxy references
 - ~simd~ as a range
 - input-output support
+- algorithm naming
 - regular redux  
 * Construction of ~std::simd~
 ** Current api
@@ -127,13 +127,12 @@ C++ programmers will expect ~std::simd~ to easily construct from other standard 
 
   std::string s{"hello");
   simd_int_8 simd3{s}; //'zero out' remaining
-  
 #+end_src
 
 ** Contiguous Range Constructor Proposal
 - recommendation:
   - add safe range constructors
-  - keep opt in unsafe for performance
+  - keep opt in unsafe for performance (unless safe has no loss)
   - investigate other range constructors (input_range) 
 - range constructor correctly handles mismatched size
   - cost will be measured
@@ -147,7 +146,7 @@ C++ programmers will expect ~std::simd~ to easily construct from other standard 
   constexpr copy_from(R&& r, Flags = {})
     
   template<contiguous_iterator It, class Flags = element_aligned_tag>
-  constexpr simd( simdunsafe{}, const It& first, Flags = {})
+  constexpr simd( simdunchecked_t{}, const It& first, Flags = {})
 
   template<contiguous_iterator It, class Flags = element_aligned_tag>
   constexpr unsafe_copy_from ( const It& first, Flags = {})
@@ -155,13 +154,13 @@ C++ programmers will expect ~std::simd~ to easily construct from other standard 
 ** Default constructor and UB
 - unfortunately ~vector<simd>~ is something we need
 - performance is impacted
-- not sure of a great approach  
+- not sure of a great approach
 #+begin_src c++
   std::simd<int> simd, simd2;
   auto simd_result = simd + simd2;
 
   //opt in to unitialized?
-  std::simd<int> simd { simdunsafe{} };
+  std::simd<int> simd { simdunchecked_t{} };
 #+end_src
 #+BEGIN_NOTES
 In this toy example it's obvious, but in other contexts where simd is passed as a parameter it would be easy to pass an unitialized simd as a parameter.  Since there's not way to interogate the simd state this is less than ideal.
@@ -227,6 +226,12 @@ constexpr value_type operator[](simd-size-type) const&
   - no lets not
 - recommendation:
   - add formatter for ~simd~ and ~simd_mask~
+* Algo naming
+- naming differences between std algo and simd
+- should try to have as much symmetry as possible
+- examples
+  - reduce_count -> count_if_true
+  - reduce_min_index -> find_if_true  
 * Regular redux
 - after further discussion there are 2 possible paths
 - first: current paper approach

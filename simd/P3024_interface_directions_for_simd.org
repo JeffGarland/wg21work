@@ -91,7 +91,7 @@ https://godbolt.org/z/sPdzGWEnx
 - ~array~, c array, ~span~, ~initializer_list~
 - * ~initializer_list~ interacts poorly with broadcast constructor
 - size mismatch
-  - too small --> zero remaining elements
+  - too small --> default initialize remaining elements
   - too large --> not compile
 #+begin_src c++
   namespace stdx = std::experimental;
@@ -126,7 +126,7 @@ C++ programmers will expect ~std::simd~ to easily construct from other standard 
   simd_int_8 simd2{sdata}; //drops 8, 9
 
   std::string s{"hello");
-  simd_int_8 simd3{s}; //'zero out' remaining
+  simd_int_8 simd3{s}; //default initialize remaining
 #+end_src
 
 ** Contiguous Range Constructor Proposal

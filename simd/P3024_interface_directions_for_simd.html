@@ -15,25 +15,34 @@
 <div class="reveal">
 <div class="slides">
 <section id="sec-title-slide">
-<h1 class="title">P3024R0 Additional interfaces for <code>std::simd</code></h1><h2 class="author">Jeff Garland, David Sankel, Matthias Kretz, Ruslan Arutyunyan</h2><p class="date">Created: 2023-11-07 Tue 16:42</p>
+<h1 class="title">P3024R0 Additional interfaces for <code>std::simd</code></h1><h2 class="author">Jeff Garland, David Sankel, Matthias Kretz, Ruslan Arutyunyan</h2><p class="date">Created: 2023-11-07 Tue 22:45</p>
 </section>
 
+
+
 <section>
-<section id="slide-orga6b9350">
-<h2 id="orga6b9350">Goals</h2>
+<section id="slide-org38b2be3">
+<h2 id="org38b2be3">Goals &amp; Context</h2>
 <ul>
 <li>Improve the experience of all users of <code>std::simd</code></li>
 <li>Increase the <code>std::simd</code> coherence with standard c++</li>
 <li>Continue to support best performance possible</li>
 <li>Outline path forward for c++26 <code>simd</code> interface</li>
 <li>Increase committee consensus on final direction forward</li>
+<li>Context
+<ul>
+<li>agree on almost everything</li>
+<li>where we disagree we, agree on the characterization of the tradeoffs</li>
+
+</ul></li>
 
 </ul>
+
 </section>
 </section>
 <section>
-<section id="slide-org55147de">
-<h2 id="org55147de">Outline</h2>
+<section id="slide-orgbf82c39">
+<h2 id="orgbf82c39">Outline</h2>
 <ul>
 <li>Construction
 <ul>
@@ -51,13 +60,13 @@
 </section>
 </section>
 <section>
-<section id="slide-org96f6709">
-<h2 id="org96f6709">Construction of <code>std::simd</code></h2>
-<div class="outline-text-2" id="text-org96f6709">
+<section id="slide-orgc0f2095">
+<h2 id="orgc0f2095">Construction of <code>std::simd</code></h2>
+<div class="outline-text-2" id="text-orgc0f2095">
 </div>
 </section>
-<section id="slide-orge0cfe80">
-<h3 id="orge0cfe80">Current api</h3>
+<section id="slide-orgcd7d77b">
+<h3 id="orgcd7d77b">Current api</h3>
 <div class="org-src-container">
 
 <pre class="src src-c++"><span style="color: #a020f0;">constexpr</span> <span style="color: #0000ff;">simd</span>() <span style="color: #a020f0;">noexcept</span>;  <span style="color: #b22222;">//</span><span style="color: #b22222;">does not initialize</span>
@@ -81,8 +90,8 @@
 </pre>
 </div>
 </section>
-<section id="slide-org61ed142">
-<h3 id="org61ed142">Current usage</h3>
+<section id="slide-org0f7f629">
+<h3 id="org0f7f629">Current usage</h3>
 <div class="org-src-container">
 
 <pre class="src src-c++"><span style="color: #483d8b;">#include</span> <span style="color: #8b2252;">&lt;experimental/simd&gt;</span>
@@ -104,16 +113,19 @@
     <span style="color: #228b22;">intv8</span> <span style="color: #a0522d;">c</span> = add_v( a, b );
 
     <span style="color: #a020f0;">for</span> (<span style="color: #228b22;">int</span> <span style="color: #a0522d;">i</span>=0; i&lt; c.size(); i++)
-       print(<span style="color: #8b2252;">"{} "</span>, c[i]);
+    {
+       <span style="color: #228b22;">int</span> <span style="color: #a0522d;">val</span> = c[i];
+       print(<span style="color: #8b2252;">"{} "</span>, val);
+    }  
 }
 </pre>
 </div>
 <p>
-TODO godbolt
+<a href="https://godbolt.org/z/sPdzGWEnx">https://godbolt.org/z/sPdzGWEnx</a>
 </p>
 </section>
-<section id="slide-orga85a925">
-<h3 id="orga85a925">Concerns and omissions</h3>
+<section id="slide-orgecf64bd">
+<h3 id="orgecf64bd">Concerns and omissions</h3>
 <ul>
 <li><code>copy_from</code> and <code>continguous_iterator</code> api are tricky to use
 <ul>
@@ -131,8 +143,8 @@ TODO godbolt
 
 </ul>
 </section>
-<section id="slide-org15bba6f">
-<h3 id="org15bba6f">Usage Desires - contiguous static extent types</h3>
+<section id="slide-org520f5e2">
+<h3 id="org520f5e2">Usage Desires - contiguous static extent types</h3>
 <ul>
 <li><code>array</code>, c array, <code>span</code>, <code>initializer_list</code></li>
 <li>* <code>initializer_list</code> interacts poorly with broadcast constructor</li>
@@ -162,8 +174,8 @@ TODO godbolt
 </pre>
 </div>
 </section>
-<section id="slide-orgb1bc2f5">
-<h3 id="orgb1bc2f5">Usage Desires - contiguous dynamic extent types</h3>
+<section id="slide-orgd7699c9">
+<h3 id="orgd7699c9">Usage Desires - contiguous dynamic extent types</h3>
 <aside class="notes">
 <p>
 C++ programmers will expect <code>std::simd</code> to easily construct from other standard library types
@@ -194,13 +206,14 @@ C++ programmers will expect <code>std::simd</code> to easily construct from othe
 </div>
 
 </section>
-<section id="slide-org3482b83">
-<h3 id="org3482b83">Contiguous Range Constructor Proposal</h3>
+<section id="slide-org8c56d8e">
+<h3 id="org8c56d8e">Contiguous Range Constructor Proposal</h3>
 <ul>
 <li>recommendation:
 <ul>
 <li>add safe range constructors</li>
 <li>keep opt in unsafe for performance</li>
+<li>investigate other range constructors (input<sub>range</sub>)</li>
 
 </ul></li>
 <li>range constructor correctly handles mismatched size
@@ -209,7 +222,7 @@ C++ programmers will expect <code>std::simd</code> to easily construct from othe
 
 </ul></li>
 <li>max performance still allowed using unsafe opt in</li>
-<li>same fixup for <code>copy_from</code></li>
+<li>similar changes for <code>copy_from</code></li>
 
 </ul>
 <div class="org-src-container">
@@ -217,16 +230,25 @@ C++ programmers will expect <code>std::simd</code> to easily construct from othe
 <pre class="src src-c++"><span style="color: #a020f0;">template</span>&lt;<span style="color: #228b22;">contiguous_range</span> <span style="color: #a0522d;">R</span>, <span style="color: #a020f0;">class</span> <span style="color: #228b22;">Flags</span> = <span style="color: #228b22;">element_aligned_tag</span>&gt;
 <span style="color: #a020f0;">constexpr</span> <span style="color: #0000ff;">simd</span>(<span style="color: #228b22;">R</span>&amp;&amp; <span style="color: #a0522d;">r</span>, Flags = {})
 
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #228b22;">contiguous_range</span> <span style="color: #228b22;">R</span>, <span style="color: #a020f0;">class</span> <span style="color: #228b22;">Flags</span> = <span style="color: #228b22;">element_aligned_tag</span>&gt;
+<span style="color: #a020f0;">constexpr</span> <span style="color: #0000ff;">copy_from</span>(<span style="color: #228b22;">R</span>&amp;&amp; <span style="color: #a0522d;">r</span>, Flags = {})
+
 <span style="color: #a020f0;">template</span>&lt;<span style="color: #228b22;">contiguous_iterator</span> <span style="color: #a0522d;">It</span>, <span style="color: #a020f0;">class</span> <span style="color: #228b22;">Flags</span> = <span style="color: #228b22;">element_aligned_tag</span>&gt;
 <span style="color: #a020f0;">constexpr</span> <span style="color: #0000ff;">simd</span>( simdunsafe{}, <span style="color: #a020f0;">const</span> <span style="color: #228b22;">It</span>&amp; <span style="color: #a0522d;">first</span>, Flags = {})
+
+<span style="color: #a020f0;">template</span>&lt;<span style="color: #228b22;">contiguous_iterator</span> <span style="color: #228b22;">It</span>, <span style="color: #a020f0;">class</span> <span style="color: #228b22;">Flags</span> = <span style="color: #228b22;">element_aligned_tag</span>&gt;
+<span style="color: #a020f0;">constexpr</span> <span style="color: #0000ff;">unsafe_copy_from</span> ( <span style="color: #a020f0;">const</span> <span style="color: #228b22;">It</span>&amp; <span style="color: #a0522d;">first</span>, Flags = {})
 </pre>
 </div>
 </section>
-<section id="slide-org28a575d">
-<h3 id="org28a575d">Default constructor and UB</h3>
-<p>
-The following code is undefined behavior:
-</p>
+<section id="slide-org7420064">
+<h3 id="org7420064">Default constructor and UB</h3>
+<ul>
+<li>unfortunately <code>vector&lt;simd&gt;</code> is something we need</li>
+<li>performance is impacted</li>
+<li>not sure of a great approach</li>
+
+</ul>
 <div class="org-src-container">
 
 <pre class="src src-c++"><span style="color: #008b8b;">std</span>::<span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">simd</span>, <span style="color: #a0522d;">simd2</span>;
@@ -236,12 +258,6 @@ The following code is undefined behavior:
 <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">simd</span> { simdunsafe{} };
 </pre>
 </div>
-<ul>
-<li>unfortunately <code>vector&lt;simd&gt;</code> is something we need</li>
-<li>performance is impacted</li>
-<li>not sure of a great approach</li>
-
-</ul>
 <aside class="notes">
 <p>
 In this toy example it's obvious, but in other contexts where simd is passed as a parameter it would be easy to pass an unitialized simd as a parameter.  Since there's not way to interogate the simd state this is less than ideal.
@@ -250,18 +266,41 @@ In this toy example it's obvious, but in other contexts where simd is passed as 
 </aside>
 
 </section>
-<section id="slide-org6f43edb">
-<h3 id="org6f43edb">initializer list</h3>
+<section id="slide-orge412878">
+<h3 id="orge412878">initializer list</h3>
 <ul>
 <li><a href="http://wg21.link/P2876">P2876R0 Proposal to extend std::simd with more constructors and accessors</a>.</li>
-<li>TODO - more here on the broadcast issue</li>
+<li>Recommendation:
+<ul>
+<li>leave <code>initializer_list</code> out in core</li>
+<li>add it as P2876 progresses</li>
+<li>consider using a broadcast wrapper to handle ambiguity</li>
+
+</ul></li>
 
 </ul>
+<div class="org-src-container">
+
+<pre class="src src-c++">  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">a</span>(1);       <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 1, 1, 1]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">b</span>{1};       <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 1, 1, 1]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">c</span> = {1};    <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 1, 1, 1]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">d</span>{1, 0};    <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 0, 0, 0]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">e</span> = {1, 0}; <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 0, 0, 0]</span>
+<span style="color: #b22222;">// </span><span style="color: #b22222;">alternate</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">a</span>(1);         <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 0, 0, 0]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">b</span>{1};         <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 0, 0, 0]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">c</span> = {1};      <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 0, 0 ,0]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">d</span>{1, 2};      <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 2, 0, 0]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">e</span> = {1, 2};   <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 2, 0, 0]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #0000ff;">f</span>(bcast(1));  <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 1, 1, 1]</span>
+  <span style="color: #228b22;">simd</span>&lt;<span style="color: #228b22;">int</span>&gt; <span style="color: #a0522d;">b</span> = bcast(1); <span style="color: #b22222;">// </span><span style="color: #b22222;">[1, 1, 1, 1]</span>
+</pre>
+</div>
 </section>
 </section>
 <section>
-<section id="slide-org241b18f">
-<h2 id="org241b18f">Vectorizable type Type support enum and <code>std::byte</code></h2>
+<section id="slide-orgea49807">
+<h2 id="orgea49807">Vectorizable type Type support enum and <code>std::byte</code></h2>
 <ul>
 <li><code>std::byte</code> is a safer <code>unsigned char</code> for bitops</li>
 <li>makes sense to make simd from <code>span&lt;byte&gt;</code></li>
@@ -279,8 +318,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-orgc06dc47">
-<h2 id="orgc06dc47"><code>Operator[]</code> and proxy reference</h2>
+<section id="slide-org5f1b9ab">
+<h2 id="org5f1b9ab"><code>Operator[]</code> and proxy reference</h2>
 <ul>
 <li>simd is not a container
 <ul>
@@ -307,8 +346,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-org45053c0">
-<h2 id="org45053c0">simd as range</h2>
+<section id="slide-orgf8c41ba">
+<h2 id="orgf8c41ba">simd as range</h2>
 <ul>
 <li>discussed in several papers</li>
 <li>need <code>begin</code> <code>end</code> <code>iterators</code></li>
@@ -330,8 +369,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-orgd6cac24">
-<h2 id="orgd6cac24">Input-output support</h2>
+<section id="slide-org84e3efe">
+<h2 id="org84e3efe">Input-output support</h2>
 <ul>
 <li>at a mimimum we'd like output support in format</li>
 <li>pretty much expect output like vector</li>
@@ -350,8 +389,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-org38cebe8">
-<h2 id="org38cebe8">Regular redux</h2>
+<section id="slide-orgc69ff2a">
+<h2 id="orgc69ff2a">Regular redux</h2>
 <ul>
 <li>after further discussion there are 2 possible paths</li>
 <li>first: current paper approach</li>
@@ -365,8 +404,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 
 </ul>
 </section>
-<section id="slide-org94a297e">
-<h3 id="org94a297e">Pros for current approach</h3>
+<section id="slide-orgf11c188">
+<h3 id="orgf11c188">Pros for current approach</h3>
 <ul>
 <li>minimal change with existing scalar alg to work with simd</li>
 <li>minimize cognitive overhead when learning simd</li>
@@ -378,8 +417,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 
 </ul>
 </section>
-<section id="slide-orge3bfe38">
-<h3 id="orge3bfe38">Pros for regular approach</h3>
+<section id="slide-org746f1ec">
+<h3 id="org746f1ec">Pros for regular approach</h3>
 <ul>
 <li>fundamental regular operations have an exclusive meaning in c++ aside from valarray</li>
 <li><code>vector&lt;simd&lt;T&gt;&gt;</code> is a use case and <code>operator==</code> works</li>
@@ -393,8 +432,8 @@ What about <code>std::simd&lt;std::byte&gt;</code>? <code>std::byte</code> is a 
 </section>
 </section>
 <section>
-<section id="slide-orge357e96">
-<h2 id="orge357e96">References</h2>
+<section id="slide-org0bfcadf">
+<h2 id="org0bfcadf">References</h2>
 <ol>
 <li>[P1978] Kretz <a href="https://wg21.link/P1978">https://wg21.link/P1978</a></li>
 

@@ -133,7 +133,7 @@ C++ programmers will expect ~std::simd~ to easily construct from other standard 
 - recommendation:
   - add safe range constructors
   - keep opt in unsafe for performance (unless safe has no loss)
-  - investigate other range constructors (input_range) 
+  - investigate other range constructors (~input_range~) 
 - range constructor correctly handles mismatched size
   - cost will be measured
 - max performance still allowed using unsafe opt in    

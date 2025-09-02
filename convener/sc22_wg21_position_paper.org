@@ -1,0 +1,202 @@
+
+* Open Letter to WG21 and SC22
+
+Dear colleagues of WG21 and SC22,
+
+With the decision on the next C++ Convener approaching, I want to share
+why I am seeking this role and the vision I see for the future of WG21.
+
+I also know there have been statements circulating in the committee that
+have been attributed to me. They are not accurate and do not represent my
+views. To understand my position, please read on or contact me directly.
+I will devote as much time as needed this week to speak with members
+before the SC22 vote.
+
+** Why Convener?
+
+Most of you know me from steady participation in the committee since 2018. Many
+might not know that my passion for C++ goes back 30 years to a project in the
+mid 90's. And that my first committee participation was during the C++11 era where
+boost.date_time served as the original basis for C++11 chrono.
+
+In the year 2000 after finishing my first industrial C++ project with 5 date-time
+libraries, I wondered why it ended up that way. It was clearly a failure of
+design -- mostly object oriented. So I experimented with my own ideas for date-time
+using generic concepts. The separation of concerns generic programming offered had
+me hooked. Since then I've not been able to let go of the expressiveness C++ allows
+while creating fast and efficient programs.
+
+As a result, I've spent an unreasonable amount of my spare time working toward
+improving C++ via the committee, expanding the community via C++Now,
+as part of the Boost Foundation leadership, and being an advocate and
+communicator for C++ at conferences and in industry. The majority of the
+effort is boring, unglamorous work that few will see and some will openly deride.
+
+Similarly, most of Convener role comes with many non-technical and administrative
+tasks. After all, the Convener doesn't make the standard, that's the job of the
+committee. The Convener’s role is to set the conditions for committee work and
+interact with the broader community. Inside WG21, that means building consensus,
+improving processes, and organizing work for maximum effectiveness. Outside, it
+means serving as a clear public voice for C++, supporting open-source engagement,
+and liaising with other groups.
+
+** Experience and Qualifications
+
+This year I'm celebrating(?) my 40th year in software development. I've
+been a team lead for decades on many large projects.  To me, being a leader
+means that I work for my team - clearing obstacles, clarifying requirements,
+removing politics, and generally improving the environment for them to do work.
+I would bring this same approach to the Convener role - I work for the committee
+not the other way around.
+
+As part of WG21 I've written papers, reviewed and helped many authors
+improve their work, and served as a subgroup co-chair in Library Working Group
+since 2020.  In LWG I've been primarily responsible for scheduling and
+also running the room in face-to-face meetings when Jonathan is absent.
+My experiences as a chair informs my understanding of the challenges for
+chairs.  It's a difficult and largely thankless job that is also critical
+to the functioning and effectiveness of the overall committee.
+
+During my time as co-chair in LWG we've faced the challenge of adapting to
+remote work in the pandemic and now hybrid.  We've experimented with our
+approaches abandoning things that don't work and sticking with those that do.
+As a result of these tactical changes the years-long backlog in library
+is gone.
+
+I'm not trying to take sole credit for innovation in LWG - that belongs to
+relentless effort of the entire team. Rather pointing out that process does
+matter and that we should not be afraid to innovate.  In fact I think it's
+essential to keep improving.  WG21 is a big committee and being a chair opens
+your eyes to the struggles of our authors.  We would be wise to understand and
+address the reasons that authors walk away from good proposals in frustration.
+You might be surprised to learn there's one author that's been working for over
+a decade on a small-medium sized paper that is still not adopted or rejected.
+Really this isn't acceptable.
+
+Going back to experience, the Convener is responsible for handling the guest
+process and helping new meeting attendees. As part of the Boost Foundation
+standardization initiative, I'm quite familiar with these processes and helping
+new members navigate the committee. Currently we have some excellent components
+like the Sunday meet. I'm certain we can do even more to make the committee
+welcoming to new people.
+
+** The Future of C++
+
+As Herb said in the last plenary, C++26 is a breakthrough release: reflection,
+contracts, senders-receivers, simd, and parallel range algorithms provide a
+foundation for next generation of applications.
+
+On their own, however, I fear these features are not enough to secure the future.
+The perception of C++ as an unsafe language that's too difficult to use is a dark
+cloud on the horizon that must be addressed to the best of our abilities. I believe
+we face nothing less than a steep decline in users, vendors, and applications if we fail.
+
+C++26 provides a start with erroneous behavior becoming defined and the hardened standard
+library.  Some of what's needed is better communication about what we're already doing and
+how to effectively utilize existing tools.
+
+Still, many gaps remain. I'm well aware that the Convener doesn't dictate
+the focus of an all-volunteer organization.  But, the Convener can
+help organize development of a vision paper voted on by the entire committee that
+informs subgroup priorities and encourage members to bring significant proposals
+to the committee.
+
+At this point, I'd like to clear up a specific confusion I've heard from committee members
+about how I would approach being Convener.  Some have suggested that I would somehow
+inject myself in key technical discussions and, in effect, exercise undue influence.
+Even if I wanted to do that -- and I do not -- the committee would rightly push back.
+A top-down strategy would last about as long as a snowball in a Phoenix summer.
+
+** Actions I Plan to Take - Listening
+
+My first act as Convener will be to meet with all the chairs and listen - one on one and
+as a group.  In my view, chairs need to talk more and discuss best practices.
+For the one on one, I want to hear first hand their frustrations and issues as well as ideas
+for improvement.  I've already been meeting with chairs and other committee members, and can say
+there is a deep well of excellent ideas to improve how we do business.
+
+Some suggestions, like better scheduling for meetings, we can improve with small effort by chairs
+working as a team. Things like scheduling seem trivial, but in a world with hybrid meetings
+managing time zones for remote participants and conflicts for contributors is tricky and vital.
+Doing this well improves the experience for all and the final product as well.
+
+As part of the chair discussions, I'll be explicitly asking about growth of new
+co-chairs. We need to identify and nurture future leadership so as members move
+on from the committee we're prepared for continuity. Like we've done in LWG, some
+co-chairs might mostly focus on a purposeful role such as scheduling or
+results tracking -- so that the entire burden doesn't fall on a single person.
+
+Other changes will require committee discussion and concurrence. Also, since the Convener
+serves the entire committee I'll also open the door to conversations with any member. No
+matter what, any changes we decide to make as a group will be transparent and clearly
+communicated.
+
+** Actions I Plan to Take - Vision and Early Consensus
+
+I mentioned in an earlier section above a vision paper voted on by the committee. In
+my experience, having a roadmap of priorities is essential to allocating time well.
+I believe it will be worth the time and effort of the committee to come to consensus
+on this so that as we work through a new standard we allocate time appropriately.  This
+may mean that some proposals will be slowed in deference to higher priority items.
+
+Of course that prioritization is already happening.  It's just being managed by subgroup
+chairs without input from full committee discussion. To be clear, I'm not suggesting the
+current chairs haven't made good decisions -- just that the committee as a whole didn't
+have direct input on the priorities.
+
+The priorities should be a living document open to ongoing revision. Three years is
+a long time in our world and priorities can shift mid-cycle.  As for whom will author
+and maintain this paper, this is a detail we would work out.  It could be the
+output of a subgroup or just individual volunteer authors -- with contributions
+from any member.
+
+To do what I'm suggesting will require us to use some of the 360 hours of non-voting
+face-to-face time we have in each cycle for either extended plenary or larger joint
+sessions to discuss. Could we spare a couple hours over several meetings to have
+larger group discussion as well as gaining early consensus on the design of key
+features? I believe we could subtract a handful of hours from parallel subgroup
+work to be proactive on this point. In the Sofia plenary we spent at least
+thirty minutes discussing this point after some members where suprised.
+
+I also think, perhaps counterintuitively, that at times we can be more efficient
+by having some larger technical sessions -- so we avoid rehashing arguments in
+multiple subgroups with different sets of people. Not only is this discouraging
+and disorienting for authors, but it isn't an efficient use of time.  The decisions
+about when to do this are best left to subgroup chairs with support from the
+Convener.  Clearly this can't be done for everything, but especially for features
+that span both language and library it is helpful to be working from the
+same page.
+
+** Actions I Plan to Take - Other Things
+
+If you've not fallen asleep by this point, I hope it's clear that there is
+no agenda to fire chairs, disband subgroups, require all library changes
+to be part of the Beman project, and spend most of the committee
+time on Rust -- all of which have apparently been incorrectly attributed
+to me.
+
+Rather, the agenda is to take time to reflect (pun intended) on how the standard
+is made, document it better, and use the best ideas from the entire committee to
+update our processes to make our work even more efficient and of the highest quality
+possible. The users of C++ deserve nothing less from us.
+
+** Closing
+
+Finally, I would like to take this opportunity to thank Herb for so many years
+of service as Convener. He has carried out what is often a thankless role with
+grace and efficiency that will be difficult to match.
+
+As Convener I will work side by side with the rest of you to help us focus
+on securing the future.  I'm confident that WG21 has the thought leaders to
+close the gaps and put C++ on course to thrive for another 40 years.
+In the end for me, there can be no higher service, responsibility, and
+joy than helping to improve C++ for our millions of users.
+
+Thank you for your time.
+
+Jeff
+
+
+
+
+
